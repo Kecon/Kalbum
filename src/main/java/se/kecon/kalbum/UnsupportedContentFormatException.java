@@ -21,8 +21,8 @@ package se.kecon.kalbum;
  * Exception for unsupported content format.
  *
  * @author Kenny Colliander
- * @since 2023-08-05
  * @see se.kecon.kalbum.ContentFormat
+ * @since 2023-08-05
  */
 public class UnsupportedContentFormatException extends Exception {
 
