@@ -19,9 +19,9 @@ package se.kecon.kalbum;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * POJO for an album.
@@ -31,19 +31,16 @@ import java.util.stream.Collectors;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class Album extends AlbumContent implements Cloneable {
+@NoArgsConstructor
+public class Album extends AlbumContent {
 
     private List<ContentData> contents;
 
+    public Album(Album album) {
+        super(album);
 
-    @Override
-    public Album clone() {
-        Album clone = (Album) super.clone();
-
-        if (this.contents != null) {
-            clone.setContents(this.contents.stream().map(ContentData::clone).collect(Collectors.toList()));
+        if (album.getContents() != null) {
+            this.contents = album.getContents().stream().map(ContentData::new).toList();
         }
-
-        return clone;
     }
 }

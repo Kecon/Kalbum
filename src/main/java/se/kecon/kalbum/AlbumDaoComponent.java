@@ -73,7 +73,7 @@ public class AlbumDaoComponent implements AlbumDao, InitializingBean {
 
         int tries = 0;
         while (true) {
-            String id = null;
+            String id;
             do {
                 id = idGenerator.get();
 
@@ -89,7 +89,7 @@ public class AlbumDaoComponent implements AlbumDao, InitializingBean {
 
             try {
                 saveToPersistentStorage(album);
-                return album.clone();
+                return album;
             } catch (IllegalAlbumIdException e) {
                 log.error("Invalid album id was generated in create: " + id, e);
             }
@@ -108,7 +108,7 @@ public class AlbumDaoComponent implements AlbumDao, InitializingBean {
         checkValidAlbumId(id);
         final Album album = this.albums.get(id);
 
-        return album != null ? Optional.of(album.clone()) : Optional.empty();
+        return album != null ? Optional.of(new Album(album)) : Optional.empty();
     }
 
     /**
@@ -118,7 +118,7 @@ public class AlbumDaoComponent implements AlbumDao, InitializingBean {
      */
     @Override
     public List<Album> getAll() {
-        return this.albums.values().stream().map(Album::clone).collect(Collectors.toList());
+        return this.albums.values().stream().map(Album::new).collect(Collectors.toList());
     }
 
     /**
@@ -195,7 +195,7 @@ public class AlbumDaoComponent implements AlbumDao, InitializingBean {
             final ObjectMapper objectMapper = getObjectMapper();
             Files.write(path, objectMapper.writeValueAsBytes(album));
 
-            this.albums.put(album.getId(), album.clone());
+            this.albums.put(album.getId(), new Album(album));
         } finally {
             this.lock.unlock();
         }
@@ -219,7 +219,7 @@ public class AlbumDaoComponent implements AlbumDao, InitializingBean {
 
             this.albums.put(id, album);
 
-            return Optional.of(album.clone());
+            return Optional.of(new Album(album));
         }
         log.warn("Album {} does not exist", id);
         return Optional.empty();

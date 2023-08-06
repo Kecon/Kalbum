@@ -122,7 +122,7 @@ public class AlbumController {
      * @return list of albums
      */
     @GetMapping(path = "/albums/")
-    public ResponseEntity<List<AlbumContent>> listAlbums() throws IllegalAlbumIdException, IOException {
+    public ResponseEntity<List<AlbumContent>> listAlbums() {
         log.info("List albums");
 
         final List<AlbumContent> albumContents = new ArrayList<>();

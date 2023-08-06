@@ -18,6 +18,7 @@
 package se.kecon.kalbum;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
@@ -28,7 +29,8 @@ import java.time.Instant;
  * @since 2023-07-31
  */
 @Data
-public class ContentData implements Cloneable {
+@NoArgsConstructor
+public class ContentData {
 
     private String contentType;
 
@@ -44,20 +46,13 @@ public class ContentData implements Cloneable {
 
     private Instant timestamp;
 
-    @Override
-    public ContentData clone() {
-        try {
-            final ContentData clone = (ContentData) super.clone();
-            clone.setContentType(this.contentType);
-            clone.setSrc(this.src);
-            clone.setAlt(this.alt);
-            clone.setText(this.text);
-            clone.setWidth(this.width);
-            clone.setHeight(this.height);
-            clone.setTimestamp(this.timestamp);
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+    public ContentData(ContentData contentData) {
+        this.contentType = contentData.getContentType();
+        this.src = contentData.getSrc();
+        this.alt = contentData.getAlt();
+        this.text = contentData.getText();
+        this.width = contentData.getWidth();
+        this.height = contentData.getHeight();
+        this.timestamp = contentData.getTimestamp();
     }
 }
