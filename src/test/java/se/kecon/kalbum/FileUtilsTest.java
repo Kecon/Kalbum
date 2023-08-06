@@ -17,11 +17,19 @@
  */
 package se.kecon.kalbum;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.multipart.MultipartFile;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -59,5 +67,17 @@ class FileUtilsTest {
     @Test
     void testRemoveSuffixNull() {
         assertThrows(IllegalArgumentException.class, () -> FileUtils.removeSuffix(null));
+    }
+
+    @Test
+    void testCopy() throws IOException {
+        try (final FileSystem fileSystem = Jimfs.newFileSystem(UUID.randomUUID().toString(), Configuration.unix())) {
+            final Path path = fileSystem.getPath("/").resolve("test.tmp");
+            final byte[] bytes = "Hello world".getBytes();
+
+            FileUtils.copy(bytes, path);
+
+            assertArrayEquals(bytes, Files.readAllBytes(path));
+        }
     }
 }

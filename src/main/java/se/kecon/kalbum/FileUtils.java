@@ -19,6 +19,10 @@ package se.kecon.kalbum;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 
 /**
@@ -28,6 +32,12 @@ import java.util.UUID;
  * @since 2023-08-03
  */
 public class FileUtils {
+
+    /**
+     * Hide constructor
+     */
+    private FileUtils() {
+    }
 
     /**
      * Get the filename of a file
@@ -63,5 +73,17 @@ public class FileUtils {
             throw new IllegalArgumentException("Invalid filename");
         }
         return filename.substring(0, index);
+    }
+
+    /**
+     * Copy a byte array to a path
+     * @param bs the byte array
+     * @param path the path
+     * @throws IOException if an I/O error occurs
+     */
+    public static void copy(byte[] bs, Path path) throws IOException {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bs)){
+            Files.copy(inputStream, path);
+        }
     }
 }
