@@ -34,7 +34,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static se.kecon.kalbum.FileUtils.removeSuffix;
@@ -118,7 +117,7 @@ public class AlbumDaoComponent implements AlbumDao, InitializingBean {
      */
     @Override
     public List<Album> getAll() {
-        return this.albums.values().stream().map(Album::new).collect(Collectors.toList());
+        return this.albums.values().stream().map(Album::new).toList();
     }
 
     /**

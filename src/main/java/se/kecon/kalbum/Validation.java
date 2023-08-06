@@ -31,6 +31,11 @@ public class Validation {
 
     protected static final Pattern VALID_FILENAME = Pattern.compile("^[^\\\\/:*?\"<>|]+\\.(?i)(png|jpe?g|mp4)$");
 
+    /**
+     * Hide constructor
+     */
+    private Validation() {
+    }
 
     /**
      * Check if the id is valid and not contain any invalid characters
