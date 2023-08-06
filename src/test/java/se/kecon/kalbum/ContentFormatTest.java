@@ -124,7 +124,7 @@ class ContentFormatTest {
     }
 
     @Test
-    void detectFileTypeAsInvalid()  {
+    void detectFileTypeAsInvalid() {
         MultipartFile file = mock(MultipartFile.class);
         assertThrows(UnsupportedContentFormatException.class, () -> ContentFormat.detectFileType(file));
     }
