@@ -1,0 +1,14 @@
+{
+  "id": "id1",
+  "name": "My first album",
+  "contents": [
+    {
+      "contentType": "image/jpeg",
+      "src": "IMG_8653.jpg",
+      "alt": "Describes IMG_8653.jpg",
+      "width": 6720,
+      "height": 4480,
+      "timestamp": "2023-04-10T15:05:07.000Z"
+    }
+  ]
+}
