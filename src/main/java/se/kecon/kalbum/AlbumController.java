@@ -53,8 +53,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static se.kecon.kalbum.FileUtils.getFilename;
-import static se.kecon.kalbum.FileUtils.removeSuffix;
+import static se.kecon.kalbum.FileUtils.*;
 import static se.kecon.kalbum.Validation.checkValidAlbumId;
 import static se.kecon.kalbum.Validation.checkValidFilename;
 
@@ -237,53 +236,16 @@ public class AlbumController {
 
             final byte[] bs = file.getBytes();
 
-            try (InputStream inputStream = new ByteArrayInputStream(bs)) {
-                Files.copy(inputStream, contentPath);
-            }
+            copy(bs, contentPath);
 
             if (contentFormat.isImage()) {
                 try (InputStream inputStream = new ByteArrayInputStream(bs); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                     imageInfo = Thumbnail.createThumbnail(inputStream, outputStream, 512, ContentFormat.getContentFormat(filename).name());
 
-                    try (InputStream thumbnailInputStream = new ByteArrayInputStream(outputStream.toByteArray())) {
-                        Files.copy(thumbnailInputStream, thumbnailPath);
-                    }
+                    copy(outputStream.toByteArray(), thumbnailPath);
                 }
             } else {
-                final BufferedImage bufferedImage = Thumbnail.generateVideoThumbnail(contentPath);
-                try (InputStream inputStream = ClassLoader.getSystemResourceAsStream("static/play.png")) {
-                    Objects.requireNonNull(inputStream, "Play icon not found");
-                    final BufferedImage play = ImageIO.read(inputStream);
-
-                    try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-                        imageInfo = Thumbnail.createThumbnail(bufferedImage, outputStream, 512, "png");
-
-                        BufferedImage thumbnail = ImageIO.read(new ByteArrayInputStream(outputStream.toByteArray()));
-                        Graphics2D graphics = (Graphics2D) thumbnail.getGraphics();
-
-                        try {
-                            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                            graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-                            final int width = thumbnail.getWidth();
-                            final int height = thumbnail.getHeight();
-
-                            graphics.drawImage(play, width / 2 - play.getWidth() / 2, height / 2 - play.getHeight() / 2, null);
-
-                        } finally {
-                            graphics.dispose();
-                        }
-
-                        try (ByteArrayOutputStream thumbnailOutputStream = new ByteArrayOutputStream()) {
-                            ImageIO.write(thumbnail, "png", thumbnailOutputStream);
-
-                            try (InputStream thumbnailInputStream = new ByteArrayInputStream(thumbnailOutputStream.toByteArray())) {
-                                Files.copy(thumbnailInputStream, thumbnailPath);
-                            }
-                        }
-                    }
-                }
+                imageInfo = generateVideoThumbnail(contentPath, thumbnailPath);
             }
 
             ContentData contentData = new ContentData();
@@ -328,6 +290,43 @@ public class AlbumController {
         } catch (UnsupportedContentFormatException e) {
             return new ResponseEntity<>(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
         }
+    }
+
+    protected Thumbnail.ImageInfo generateVideoThumbnail(Path contentPath, Path thumbnailPath) throws IOException {
+        Thumbnail.ImageInfo imageInfo;
+        final BufferedImage bufferedImage = Thumbnail.generateVideoThumbnail(contentPath);
+        try (InputStream inputStream = ClassLoader.getSystemResourceAsStream("static/play.png")) {
+            Objects.requireNonNull(inputStream, "Play icon not found");
+            final BufferedImage play = ImageIO.read(inputStream);
+
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                imageInfo = Thumbnail.createThumbnail(bufferedImage, outputStream, 512, "png");
+
+                BufferedImage thumbnail = ImageIO.read(new ByteArrayInputStream(outputStream.toByteArray()));
+                Graphics2D graphics = (Graphics2D) thumbnail.getGraphics();
+
+                try {
+                    graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+                    final int width = thumbnail.getWidth();
+                    final int height = thumbnail.getHeight();
+
+                    graphics.drawImage(play, width / 2 - play.getWidth() / 2, height / 2 - play.getHeight() / 2, null);
+
+                } finally {
+                    graphics.dispose();
+                }
+
+                try (ByteArrayOutputStream thumbnailOutputStream = new ByteArrayOutputStream()) {
+                    ImageIO.write(thumbnail, "png", thumbnailOutputStream);
+
+                    copy(thumbnailOutputStream.toByteArray(), thumbnailPath);
+                }
+            }
+        }
+        return imageInfo;
     }
 
     /**
