@@ -17,7 +17,6 @@
  */
 package se.kecon.kalbum;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -28,23 +27,15 @@ import lombok.NoArgsConstructor;
  * @since 2023-07-31
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class AlbumContent implements Cloneable {
+public class AlbumContent {
 
     private String id;
 
     private String name;
 
-    @Override
-    public AlbumContent clone() {
-        try {
-            AlbumContent clone = (AlbumContent) super.clone();
-            clone.setId(this.id);
-            clone.setName(this.name);
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+    public AlbumContent(AlbumContent albumContent) {
+        this.id = albumContent.getId();
+        this.name = albumContent.getName();
     }
 }

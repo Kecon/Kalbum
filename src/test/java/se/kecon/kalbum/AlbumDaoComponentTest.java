@@ -173,7 +173,7 @@ class AlbumDaoComponentTest {
     }
 
     @Test
-    void getInvalidId() throws IOException, IllegalAlbumIdException {
+    void getInvalidId() throws IOException {
         albumDao.setIdGenerator(() -> "id1");
         Album album = albumDao.create("name1");
 
@@ -231,7 +231,7 @@ class AlbumDaoComponentTest {
     }
 
     @Test
-    void updateNonExisting() throws IOException, IllegalAlbumIdException {
+    void updateNonExisting() throws IOException {
         albumDao.setIdGenerator(() -> "id1");
         Album album = albumDao.create("name1");
 
@@ -242,7 +242,7 @@ class AlbumDaoComponentTest {
     }
 
     @Test
-    void updateInvalidId() throws IOException, IllegalAlbumIdException {
+    void updateInvalidId() throws IOException {
         albumDao.setIdGenerator(() -> "id1");
         Album album = albumDao.create("name1");
 
