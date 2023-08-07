@@ -9,7 +9,7 @@ function loadAlbums() {
             var html = '<ul>';
             for (var i = 0; i < data.length; i++) {
                 const albumData = data[i];
-                html += '<li><a href="javascript:void(0);" data-albumId="' + albumData.id + '" class="album">' + albumData.name + '</a></li>';
+                html += '<li><a href="javascript:void(0);" data-albumId="' + albumData.id + '" class="album"><h3>' + albumData.name + '</h3><img src="albums/' + albumData.id +'/preview.png" /></a><button class="reload" data-albumId="' + albumData.id + '">🔃</button></li>';
             }
             html += '</ul>';
             document.getElementById("albums").innerHTML = html;
@@ -20,6 +20,12 @@ function loadAlbums() {
                 albums[i].addEventListener("click", function() {
                     document.getElementById("selectAlbum").close();
                     showAlbum(this.getAttribute("data-albumId"));
+                });
+            }
+            const reloadButtons = document.getElementsByClassName("reload");
+            for (let i = 0; i < reloadButtons.length; i++) {
+                reloadButtons[i].addEventListener("click", function() {
+                    reloadPreview(this);
                 });
             }
         }
@@ -610,4 +616,20 @@ function showSelectAlbumDialog() {
    document.getElementById("selectAlbum").showModal();
    document.getElementById("selectAlbum").classList.add("fadeIn");
    return false;
+}
+
+function reloadPreview(target) {
+
+    console.log("Target: " + target);
+    for (const child of target.parentElement.childNodes) {
+        console.log(child.tagName);
+        if(child.tagName == "A") {
+            for(const child2 of child.childNodes) {
+                if (child2.tagName == "IMG") {
+                    child2.src = '';
+                    child2.src = "albums/" + target.getAttribute("data-albumId") + "/preview.png?generate=true&t=" + new Date().getTime();
+                }
+            }
+        }
+    }
 }

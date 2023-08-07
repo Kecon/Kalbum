@@ -25,6 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
+import static se.kecon.kalbum.Validation.checkValidAlbumId;
+import static se.kecon.kalbum.Validation.checkValidFilename;
+
 /**
  * Utility class for files.
  *
@@ -32,6 +35,10 @@ import java.util.UUID;
  * @since 2023-08-03
  */
 public class FileUtils {
+
+    public static final String CONTENT_PATH = "contents";
+
+    public static final String THUMBNAIL_PATH = ".thumbnails";
 
     /**
      * Hide constructor
@@ -85,5 +92,44 @@ public class FileUtils {
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bs)){
             Files.copy(inputStream, path);
         }
+    }
+
+    /**
+     * Get the path to the thumbnail for the given content
+     *
+     * @param albumBasePath base path
+     * @param id            album id
+     * @param filename      content filename
+     * @param contentFormat content format
+     * @return path
+     * @throws IllegalAlbumIdException  if the id is invalid
+     * @throws IllegalFilenameException if the filename is invalid
+     */
+    public static Path getThumbnailPath(final Path albumBasePath, final String id, final String filename, final ContentFormat contentFormat) throws IllegalAlbumIdException, IllegalFilenameException {
+        checkValidAlbumId(id);
+        checkValidFilename(filename);
+
+        if (contentFormat.isImage()) {
+            return albumBasePath.resolve(id).resolve(CONTENT_PATH).resolve(THUMBNAIL_PATH).resolve(filename);
+        } else {
+            return albumBasePath.resolve(id).resolve(CONTENT_PATH).resolve(THUMBNAIL_PATH).resolve(removeSuffix(filename) + ".png");
+        }
+    }
+
+    /**
+     * Get the path to the content with the given id
+     *
+     * @param albumBasePath base path
+     * @param id       album id
+     * @param filename content filename
+     * @return path
+     * @throws IllegalAlbumIdException  if the id is invalid
+     * @throws IllegalFilenameException if the filename is invalid
+     */
+    public static Path getContentPath(final Path albumBasePath, final String id, final String filename) throws IllegalAlbumIdException, IllegalFilenameException {
+        checkValidAlbumId(id);
+        checkValidFilename(filename);
+
+        return albumBasePath.resolve(id).resolve(CONTENT_PATH).resolve(filename);
     }
 }
