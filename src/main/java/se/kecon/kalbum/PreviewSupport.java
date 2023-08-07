@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +39,7 @@ public class PreviewSupport {
     private static final int MAX_IMAGES = 10;
 
     @Setter(AccessLevel.PACKAGE)
-    private Random random = new Random();
+    private Random random = new SecureRandom();
 
     /**
      * Areas of where to place images in the preview
