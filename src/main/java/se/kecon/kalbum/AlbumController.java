@@ -439,26 +439,21 @@ public class AlbumController {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            try {
-                // Input is validated in getContentPath
-                final Path path = getContentPath(albumBasePath, id, "preview.png");
+            // Input is validated in getContentPath
+            final Path path = getContentPath(albumBasePath, id, "preview.png");
 
-                if (generate || !Files.exists(path)) {
-                    this.previewSupport.createPreview(album.get());
-                }
-
-                InputStream inputStream = Files.newInputStream(path);
-                InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.IMAGE_PNG);
-
-                return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
-            } catch (IllegalAlbumIdException | IllegalFilenameException | IOException e) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            if (generate || !Files.exists(path)) {
+                this.previewSupport.createPreview(album.get());
             }
 
-        } catch (IllegalAlbumIdException e) {
+            InputStream inputStream = Files.newInputStream(path);
+            InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_PNG);
+
+            return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
+        } catch (IllegalAlbumIdException | IllegalFilenameException | IOException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
