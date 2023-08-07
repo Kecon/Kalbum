@@ -70,6 +70,9 @@ class AlbumControllerTest {
     @MockBean
     private AlbumDao albumDao;
 
+    @MockBean
+    private PreviewSupport previewSupport;
+
     @Mock
     private Album album;
 
@@ -78,6 +81,8 @@ class AlbumControllerTest {
 
     @Mock
     private ContentData contentData2;
+
+    private Path albumBasePath;
 
     @BeforeEach
     void setUp() throws IOException, IllegalAlbumIdException {
@@ -89,7 +94,7 @@ class AlbumControllerTest {
         Path rootDir = fileSystem.getPath("/");
 
         // Create a directory
-        Path albumBasePath = rootDir.resolve("/var/lib/kalbum");
+        albumBasePath = rootDir.resolve("/var/lib/kalbum");
         Files.createDirectories(albumBasePath);
 
         albumController.setAlbumBasePath(albumBasePath);
@@ -391,5 +396,27 @@ class AlbumControllerTest {
     void testDeleteContentWithInvalidFilename() throws Exception {
         mockMvc.perform(delete("/albums/id1/contents/IMG_8654.jpg"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteAlbumWithInvalidId() throws Exception {
+        mockMvc.perform(delete("/albums/id2/"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testGetPreview() throws Exception {
+
+        ClassLoader classLoader = getClass().getClassLoader();
+
+        try (InputStream inputStream = classLoader.getResourceAsStream("IMG_8653.jpg")) {
+            requireNonNull(inputStream, "Could not find file IMG_8653.jpg");
+
+            Files.copy(inputStream, FileUtils.getContentPath(albumBasePath, "id1", "preview.png"));
+
+            mockMvc.perform(get("/albums/id1/preview.png"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.IMAGE_PNG_VALUE));
+        }
     }
 }

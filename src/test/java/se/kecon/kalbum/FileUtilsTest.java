@@ -22,7 +22,6 @@ import com.google.common.jimfs.Jimfs;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -80,4 +79,23 @@ class FileUtilsTest {
             assertArrayEquals(bytes, Files.readAllBytes(path));
         }
     }
+
+    @Test
+    void testGetContentPath() throws IOException, IllegalAlbumIdException, IllegalFilenameException {
+        try (final FileSystem fileSystem = Jimfs.newFileSystem(UUID.randomUUID().toString(), Configuration.unix())) {
+            final Path path = fileSystem.getPath("/").resolve("var").resolve("lib").resolve("kalbum").resolve("id1").resolve("contents").resolve("test.png");
+
+            assertEquals(path, FileUtils.getContentPath(fileSystem.getPath("/var/lib/kalbum"), "id1", "test.png"));
+        }
+    }
+
+    @Test
+    void testGetThumbnailPath() throws IOException, IllegalAlbumIdException, IllegalFilenameException {
+        try (final FileSystem fileSystem = Jimfs.newFileSystem(UUID.randomUUID().toString(), Configuration.unix())) {
+            final Path path = fileSystem.getPath("/").resolve("var").resolve("lib").resolve("kalbum").resolve("id1").resolve("contents").resolve(".thumbnails").resolve("test.png");
+
+            assertEquals(path, FileUtils.getThumbnailPath(fileSystem.getPath("/var/lib/kalbum"), "id1", "test.png", ContentFormat.PNG));
+        }
+    }
+
 }

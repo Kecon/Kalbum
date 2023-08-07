@@ -42,7 +42,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -54,8 +53,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static se.kecon.kalbum.FileUtils.*;
-import static se.kecon.kalbum.Validation.checkValidAlbumId;
-import static se.kecon.kalbum.Validation.checkValidFilename;
 
 /**
  * Controller for the album API.
@@ -67,10 +64,6 @@ import static se.kecon.kalbum.Validation.checkValidFilename;
 @Slf4j
 public class AlbumController {
 
-    private static final String CONTENT_PATH = "contents";
-
-    private static final String THUMBNAIL_PATH = ".thumbnails";
-
     @Setter
     @Value("${kalbum.path}")
     private Path albumBasePath;
@@ -78,42 +71,9 @@ public class AlbumController {
     @Autowired
     private AlbumDao albumDao;
 
-    /**
-     * Get the path to the thumbnail for the given content
-     *
-     * @param id            album id
-     * @param filename      content filename
-     * @param contentFormat content format
-     * @return path
-     * @throws IllegalAlbumIdException  if the id is invalid
-     * @throws IllegalFilenameException if the filename is invalid
-     */
-    protected Path getThumbnailPath(final String id, final String filename, final ContentFormat contentFormat) throws IllegalAlbumIdException, IllegalFilenameException {
-        checkValidAlbumId(id);
-        checkValidFilename(filename);
+    @Autowired
+    private PreviewSupport previewSupport;
 
-        if (contentFormat.isImage()) {
-            return albumBasePath.resolve(id).resolve(CONTENT_PATH).resolve(THUMBNAIL_PATH).resolve(filename);
-        } else {
-            return albumBasePath.resolve(id).resolve(CONTENT_PATH).resolve(THUMBNAIL_PATH).resolve(removeSuffix(filename) + ".png");
-        }
-    }
-
-    /**
-     * Get the path to the content with the given id
-     *
-     * @param id       album id
-     * @param filename content filename
-     * @return path
-     * @throws IllegalAlbumIdException  if the id is invalid
-     * @throws IllegalFilenameException if the filename is invalid
-     */
-    protected Path getContentPath(final String id, final String filename) throws IllegalAlbumIdException, IllegalFilenameException {
-        checkValidAlbumId(id);
-        checkValidFilename(filename);
-
-        return albumBasePath.resolve(id).resolve(CONTENT_PATH).resolve(filename);
-    }
 
     /**
      * List all albums
@@ -223,8 +183,8 @@ public class AlbumController {
             }
 
             final ContentFormat contentFormat = ContentFormat.detectFileType(file);
-            final Path contentPath = getContentPath(id, filename);
-            final Path thumbnailPath = getThumbnailPath(id, filename, contentFormat);
+            final Path contentPath = getContentPath(albumBasePath, id, filename);
+            final Path thumbnailPath = getThumbnailPath(albumBasePath, id, filename, contentFormat);
 
             if (!Files.exists(thumbnailPath)) {
                 Files.createDirectories(thumbnailPath.getParent());
@@ -348,8 +308,8 @@ public class AlbumController {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            final Path contentPath = getContentPath(id, filename);
-            final Path thumbnailPath = getThumbnailPath(id, filename, ContentFormat.getContentFormat(filename));
+            final Path contentPath = getContentPath(albumBasePath, id, filename);
+            final Path thumbnailPath = getThumbnailPath(albumBasePath, id, filename, ContentFormat.getContentFormat(filename));
 
             if (Files.exists(contentPath)) {
                 Files.delete(contentPath);
@@ -422,14 +382,13 @@ public class AlbumController {
      * @param id       the id of the album
      * @param filename the name of the content to get
      * @return the content
-     * @throws IOException if the content could not be read
      */
     @GetMapping(path = "/albums/{id}/contents/{filename}")
-    public ResponseEntity<InputStreamResource> getContent(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename) throws IOException {
+    public ResponseEntity<InputStreamResource> getContent(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename) {
 
         try {
             // Input is validated in getContentPath
-            final Path path = getContentPath(id, filename);
+            final Path path = getContentPath(albumBasePath, id, filename);
 
             InputStream inputStream = Files.newInputStream(path);
             InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
@@ -439,7 +398,7 @@ public class AlbumController {
             headers.setContentType(MediaType.parseMediaType(contentType));
 
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
-        } catch (IllegalAlbumIdException | IllegalFilenameException | NoSuchFileException e) {
+        } catch (IllegalAlbumIdException | IllegalFilenameException | IOException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
@@ -450,13 +409,12 @@ public class AlbumController {
      * @param id       the id of the album
      * @param filename the name of the thumbnail to get
      * @return the thumbnail
-     * @throws IOException if the thumbnail could not be read
      */
     @GetMapping(path = "/albums/{id}/contents/thumbnails/{filename}")
-    public ResponseEntity<InputStreamResource> getThumbnail(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename) throws IOException {
+    public ResponseEntity<InputStreamResource> getThumbnail(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename)  {
         try {
             // Input is validated by getThumbnailPath
-            final Path path = getThumbnailPath(id, filename, ContentFormat.getContentFormat(filename));
+            final Path path = getThumbnailPath(albumBasePath, id, filename, ContentFormat.getContentFormat(filename));
 
             InputStream inputStream = Files.newInputStream(path);
             InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
@@ -466,8 +424,36 @@ public class AlbumController {
             headers.setContentType(MediaType.parseMediaType(contentType));
 
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
-        } catch (IllegalAlbumIdException | IllegalFilenameException | UnsupportedContentFormatException |
-                 NoSuchFileException e) {
+        } catch (IllegalAlbumIdException | IllegalFilenameException | UnsupportedContentFormatException | IOException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping(path = "/albums/{id}/preview.png")
+    public ResponseEntity<InputStreamResource> getPreview(@PathVariable(name = "id") String id, @RequestParam(name = "generate", defaultValue = "false" ) boolean generate)
+    {
+        try {
+            final Optional<Album> album = this.albumDao.get(id);
+
+            if (album.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+            // Input is validated in getContentPath
+            final Path path = getContentPath(albumBasePath, id, "preview.png");
+
+            if (generate || !Files.exists(path)) {
+                this.previewSupport.createPreview(album.get());
+            }
+
+            InputStream inputStream = Files.newInputStream(path);
+            InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_PNG);
+
+            return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
+        } catch (IllegalAlbumIdException | IllegalFilenameException | IOException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }

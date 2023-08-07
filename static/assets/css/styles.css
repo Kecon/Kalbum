@@ -85,7 +85,7 @@ dialog {
     background: rgba(0, 0, 0, 0.7);
 }
 
-button.close, button.previous, button.next, button.edit, button.download, button.delete {
+button.close, button.previous, button.next, button.edit, button.download, button.delete, button.reload {
     position: absolute;
     width: 2em;
     height: 2em;
@@ -133,6 +133,11 @@ button.download {
 
 button.delete {
     bottom: 0;
+    right: 0;
+}
+
+button.reload {
+    top: 0;
     right: 0;
 }
 
@@ -228,6 +233,41 @@ img.icon {
     padding: 2em 2em 2em 2em;
  }
 
+ #albums ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    height: 100%;
+ }
+
+ #albums ul li {
+    float: left;
+    margin: 0.5em 0.5em 0.5em 0;
+    padding: 0.5em 0 0.5em 0;
+    max-width: 580px;
+    min-width: 200px;
+    background-color: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 0.3em;
+    box-shadow: 0 0 0.3em rgba(0, 0, 0, 0.4);
+    text-align: center;
+    vertical-align: middle;
+    overflow: hidden;
+    display: block;
+    position: relative;
+ }
+
+#albums ul li img {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    vertical-align: middle;
+}
+
  a.album {
     color: rgba(255, 255, 255, 1);
     text-decoration: none;
@@ -240,6 +280,13 @@ a.album:hover {
     text-decoration: none;
     font-size: 1em;
     font-weight: normal;
+}
+
+fieldset {
+    border-radius: 0.3em;
+    margin-left: 0;
+    margin-right: 0.5em
+
 }
 
 #editImageProperties, #editVideoProperties {
