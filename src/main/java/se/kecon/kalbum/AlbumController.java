@@ -411,7 +411,7 @@ public class AlbumController {
      * @return the thumbnail
      */
     @GetMapping(path = "/albums/{id}/contents/thumbnails/{filename}")
-    public ResponseEntity<InputStreamResource> getThumbnail(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename)  {
+    public ResponseEntity<InputStreamResource> getThumbnail(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename) {
         try {
             // Input is validated by getThumbnailPath
             final Path path = getThumbnailPath(albumBasePath, id, filename, ContentFormat.getContentFormat(filename));
@@ -424,14 +424,14 @@ public class AlbumController {
             headers.setContentType(MediaType.parseMediaType(contentType));
 
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
-        } catch (IllegalAlbumIdException | IllegalFilenameException | UnsupportedContentFormatException | IOException e) {
+        } catch (IllegalAlbumIdException | IllegalFilenameException | UnsupportedContentFormatException |
+                 IOException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping(path = "/albums/{id}/preview.png")
-    public ResponseEntity<InputStreamResource> getPreview(@PathVariable(name = "id") String id, @RequestParam(name = "generate", defaultValue = "false" ) boolean generate)
-    {
+    public ResponseEntity<InputStreamResource> getPreview(@PathVariable(name = "id") String id, @RequestParam(name = "generate", defaultValue = "false") boolean generate) {
         try {
             final Optional<Album> album = this.albumDao.get(id);
 
