@@ -23,6 +23,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static se.kecon.kalbum.Validation.checkValidAlbumId;
@@ -84,12 +86,13 @@ public class FileUtils {
 
     /**
      * Copy a byte array to a path
-     * @param bs the byte array
+     *
+     * @param bs   the byte array
      * @param path the path
      * @throws IOException if an I/O error occurs
      */
     public static void copy(byte[] bs, Path path) throws IOException {
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bs)){
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bs)) {
             Files.copy(inputStream, path);
         }
     }
@@ -120,8 +123,8 @@ public class FileUtils {
      * Get the path to the content with the given id
      *
      * @param albumBasePath base path
-     * @param id       album id
-     * @param filename content filename
+     * @param id            album id
+     * @param filename      content filename
      * @return path
      * @throws IllegalAlbumIdException  if the id is invalid
      * @throws IllegalFilenameException if the filename is invalid
@@ -131,5 +134,98 @@ public class FileUtils {
         checkValidFilename(filename);
 
         return albumBasePath.resolve(id).resolve(CONTENT_PATH).resolve(filename);
+    }
+
+    /**
+     * Encode a semicolon separated list to a string. The following characters are escaped: \n, \r, \t, \\, ;, \b, \f
+     *
+     * @param args the list to encode
+     * @return the encoded string
+     */
+    public static String encodeSemicolonSeparatedList(final String... args) {
+        if (args == null || args.length == 0) {
+            return "";
+        }
+
+        final StringBuilder stringBuilder = new StringBuilder();
+
+        for (final String arg : args) {
+            if (!stringBuilder.isEmpty()) {
+                stringBuilder.append(';');
+            }
+
+            if (arg == null) {
+                continue;
+            }
+
+            for (final char c : arg.toCharArray()) {
+                stringBuilder.append(switch (c) {
+                    case '\n' -> "\\n"; // line feed
+                    case '\r' -> "\\r"; // carriage return
+                    case '\t' -> "\\t"; // tab
+                    case '\\' -> "\\\\"; // backslash
+                    case ';' -> "\\;"; // semicolon
+                    case '\b' -> "\\b"; // backspace
+                    case '\f' -> "\\f"; // form feed
+                    default -> c;
+                });
+            }
+        }
+
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Decode a semicolon separated list from a string. The string is escaped with backslash for the
+     * following characters: \n, \r, \t, \\, ;, \b, \f
+     *
+     * @param line the encoded string
+     * @return the list
+     */
+    public static List<String> decodeSemicolonSeparatedList(String line) {
+        if (line == null || line.isEmpty()) {
+            return List.of();
+        }
+
+        final char[] chars = line.toCharArray();
+        final StringBuilder stringBuilder = new StringBuilder();
+        final List<String> list = new ArrayList<>();
+
+        int index = 0;
+        boolean escaped = false;
+
+        while (index < chars.length) {
+            final char c = chars[index];
+
+            if (escaped) {
+                escaped = false;
+
+                stringBuilder.append(switch (c) {
+                    case 'n' -> '\n'; // line feed
+                    case 'r' -> '\r'; // carriage return
+                    case 't' -> '\t'; // tab
+                    case '\\' -> '\\'; // backslash
+                    case ';' -> ';'; // semicolon
+                    case 'b' -> '\b'; // backspace
+                    case 'f' -> '\f'; // form feed
+
+                    default -> "\\" + c;
+                });
+
+            } else if (c == '\\') {
+                escaped = true;
+            } else if (c == ';') {
+                list.add(stringBuilder.toString());
+                stringBuilder.setLength(0);
+            } else {
+                stringBuilder.append(c);
+            }
+
+            index++;
+        }
+
+        list.add(stringBuilder.toString());
+
+        return list;
     }
 }

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -98,4 +99,33 @@ class FileUtilsTest {
         }
     }
 
+    @Test
+    void testEncodeSemicolonSeparatedListSimple() {
+        assertEquals("a1;b2;c3", FileUtils.encodeSemicolonSeparatedList("a1", "b2", "c3"));
+    }
+
+    @Test
+    void testEncodeSemicolonSeparatedListWithEscape() {
+        assertEquals("a1\\n;b2\\r;c3\\t\\;boll;\\b\\f", FileUtils.encodeSemicolonSeparatedList("a1\n", "b2\r", "c3\t;boll", "\b\f"));
+    }
+
+    @Test
+    void testEncodeSemicolonSeparatedListWithNull() {
+        assertEquals("a1;b2;c3;", FileUtils.encodeSemicolonSeparatedList("a1", "b2", "c3", null));
+    }
+
+    @Test
+    void testDecodeSemicolonSeparatedListSimple() {
+        assertEquals(List.of("a1", "b2", "c3"), FileUtils.decodeSemicolonSeparatedList("a1;b2;c3"));
+    }
+
+    @Test
+    void testDecodeSemicolonSeparatedListWithEscape() {
+        assertEquals(List.of("a1\n", "b2\r", "c3\t;boll", "\b\f"), FileUtils.decodeSemicolonSeparatedList("a1\\n;b2\\r;c3\t\\;boll;\\b\\f"));
+    }
+
+    @Test
+    void testDecodeSemicolonSeparatedListWithNull() {
+        assertEquals(List.of("a1", "b2", "c3", ""), FileUtils.decodeSemicolonSeparatedList("a1;b2;c3;"));
+    }
 }
