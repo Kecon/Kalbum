@@ -3,7 +3,6 @@ package se.kecon.kalbum.auth;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.websocket.server.PathParam;
 import lombok.AccessLevel;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +23,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import se.kecon.kalbum.validation.IllegalEmailException;
 import se.kecon.kalbum.validation.IllegalPasswordException;
 
-import java.security.*;
+import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Clock;
@@ -125,12 +123,12 @@ public class PasswordResetController {
                 return;
             }
 
-            if(!user.get().isEnabled()) {
+            if (!user.get().isEnabled()) {
                 log.info("resetPassword for {} rejected due to disabled user", resetPassword.getEmail());
                 return;
             }
 
-            if(user.get().getLastPasswordResetDate() != null && user.get().getLastPasswordResetDate().plusSeconds(60).isAfter(clock.instant())) {
+            if (user.get().getLastPasswordResetDate() != null && user.get().getLastPasswordResetDate().plusSeconds(60).isAfter(clock.instant())) {
                 log.info("resetPassword for {} rejected due to too many requests", resetPassword.getEmail());
                 return;
             }
@@ -145,10 +143,12 @@ public class PasswordResetController {
             log.info("resetPassword for {} rejected due to invalid email", resetPassword.getEmail());
         } catch (IllegalPasswordException e) {
             log.info("resetPassword for {} rejected due to invalid passphrase", resetPassword.getEmail());
+        } catch (InterruptedException e) {
+            log.error("resetPassword for {} failed", resetPassword.getEmail(), e);
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             log.error("resetPassword for {} failed", resetPassword.getEmail(), e);
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }
@@ -175,7 +175,7 @@ public class PasswordResetController {
                 return getResetFailedResponse();
             }
 
-            if(!user.get().isEnabled()) {
+            if (!user.get().isEnabled()) {
                 log.info("resetPassword for {} rejected due to disabled user", uuid);
                 return getResetFailedResponse();
             }
@@ -186,11 +186,14 @@ public class PasswordResetController {
             context.setLocale(locale);
             context.setVariable("token", uuid);
             return templateEngine.process("resetpassword-new.html", context);
+        } catch (InterruptedException e) {
+            log.error("resetPassword for {} failed", uuid, e);
+            Thread.currentThread().interrupt();
+            return getResetFailedResponse();
         } catch (Exception e) {
             log.error("resetPassword for {} failed", uuid, e);
             return getResetFailedResponse();
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }
@@ -299,7 +302,7 @@ public class PasswordResetController {
     /**
      * Get the reset password link for the user
      *
-     * @param user the user to reset the password for
+     * @param user       the user to reset the password for
      * @param passphrase the passphrase to use for the reset password
      * @return the reset password link
      */
@@ -313,7 +316,7 @@ public class PasswordResetController {
         UUID uuid;
         do {
             uuid = UUID.randomUUID();
-        } while(resetPasswordDataMap.putIfAbsent(uuid, resetPasswordData) != null);
+        } while (resetPasswordDataMap.putIfAbsent(uuid, resetPasswordData) != null);
 
         return baseUrl + "/resetpassword/" + uuid;
     }
@@ -340,12 +343,12 @@ public class PasswordResetController {
                 return ResponseEntity.status(403).build();
             }
 
-            if(Duration.between(resetPasswordData.getLastPasswordResetDate(), clock.instant()).abs().toMinutes() > 15) {
+            if (Duration.between(resetPasswordData.getLastPasswordResetDate(), clock.instant()).abs().toMinutes() > 15) {
                 log.info("resetPassword for {} rejected due to expired link", uuid);
                 return ResponseEntity.status(403).build();
             }
 
-            if(!user.get().isEnabled()) {
+            if (!user.get().isEnabled()) {
                 log.info("resetPassword for {} rejected due to disabled user", uuid);
                 return ResponseEntity.status(403).build();
             }
@@ -359,7 +362,7 @@ public class PasswordResetController {
                 return ResponseEntity.status(400).build();
             }
 
-            if(!resetPasswordData.getPassphrase().equals(resetPassword.getPassphrase())) {
+            if (!resetPasswordData.getPassphrase().equals(resetPassword.getPassphrase())) {
                 log.info("resetPassword for {} rejected due to invalid passphrase", uuid);
                 return ResponseEntity.status(401).build();
             }
@@ -375,11 +378,14 @@ public class PasswordResetController {
         } catch (IllegalPasswordException e) {
             log.info("resetPassword for {} rejected due to invalid passphrase", uuid);
             return ResponseEntity.status(403).build();
+        } catch (InterruptedException e) {
+            log.error("resetPassword for {} failed", uuid, e);
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(500).build();
         } catch (Exception e) {
             log.error("resetPassword for {} failed", uuid, e);
             return ResponseEntity.status(500).build();
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }

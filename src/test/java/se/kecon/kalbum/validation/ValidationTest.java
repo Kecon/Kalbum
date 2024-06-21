@@ -73,7 +73,7 @@ class ValidationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"user1/", "user1\\", "user1:", "user1*", "user1?", "user1\"", "user1<", "user1>", "user1|", "user1.", "user1 ", "user1\t", "user1\n", "user1\r", "user1\u000B", "user1\u000C", "user1\u0085", "user1\u00A0", "user1\u2007", "user1\u202F", "user1\uFEFF", "..", "../test", "..\\test", "*", "/", "\\", "index.html", "user1@example", "user1@example.", "user1@example.c"})
+    @ValueSource(strings = {"user1/", "user1\\", "user1:", "user1*", "user1?", "user1\"", "user1<", "user1>", "user1|", "user1.", "user1 ", "user1\t", "user1\n", "user1\r", "user1\u000B", "user1\u000C", "user1\u0085", "user1\u00A0", "user1\u2007", "user1\u202F", "user1\uFEFF", "..", "../test", "..\\test", "*", "/", "\\", "index.html", "user1@example."})
     void checkValidEmailAsInvalid(String value) {
         assertThrows(IllegalEmailException.class, () -> Validation.checkValidEmail(value));
     }

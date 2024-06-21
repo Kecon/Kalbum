@@ -17,6 +17,8 @@
  */
 package se.kecon.kalbum.validation;
 
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import se.kecon.kalbum.auth.Role;
 
 import java.util.regex.Pattern;
@@ -34,8 +36,6 @@ public class Validation {
     protected static final Pattern VALID_FILENAME = Pattern.compile("^[^\\\\/:*?\"<>|]+\\.(?i)(png|jpe?g|mp4)$");
 
     protected static final Pattern VALID_USERNAME = Pattern.compile("^[_a-zA-Z0-9\\-.]+$");
-
-    protected static final Pattern VALID_EMAIL = Pattern.compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
 
     /**
      * Hide constructor
@@ -86,7 +86,9 @@ public class Validation {
      * @throws IllegalEmailException if the email is invalid
      */
     public static void checkValidEmail(final String email) throws IllegalEmailException {
-        if (!VALID_EMAIL.matcher(email).matches()) {
+        try {
+            new InternetAddress(email).validate();
+        } catch (AddressException ex) {
             throw new IllegalEmailException("Invalid email: " + email);
         }
     }

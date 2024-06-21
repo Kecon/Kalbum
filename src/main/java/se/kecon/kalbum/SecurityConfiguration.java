@@ -45,7 +45,7 @@ public class SecurityConfiguration {
                                 .requestMatchers("/users/", "/users/**").permitAll()
                                 .anyRequest().authenticated()
                 )
-                .csrf((csrf) -> csrf.csrfTokenRepository(csrfTokenRepository).requireCsrfProtectionMatcher(myCustomCsrfMatcher()))
+                .csrf((csrf) -> csrf.csrfTokenRepository(csrfTokenRepository).requireCsrfProtectionMatcher(myCustomCsrfMatcher())) // Sensitive: csrf protection is disabled for specific routes
                 .formLogin((login) -> login.loginPage("/login").permitAll())
                 .logout(Customizer.withDefaults());
         return http.build();

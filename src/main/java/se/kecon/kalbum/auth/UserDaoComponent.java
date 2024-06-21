@@ -152,7 +152,7 @@ public class UserDaoComponent implements UserDao, InitializingBean {
     }
 
     @Async
-    protected void writeAllToPersistentStorage() {
+    public void writeAllToPersistentStorage() {
         this.lock.lock();
         try {
             if (!this.dirty.getAndSet(false)) {
