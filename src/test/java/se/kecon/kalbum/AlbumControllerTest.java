@@ -30,8 +30,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import se.kecon.kalbum.auth.AlbumAuthorizationManager;
+import se.kecon.kalbum.auth.UserController;
+import se.kecon.kalbum.auth.UserDao;
+import se.kecon.kalbum.util.FileUtils;
+import se.kecon.kalbum.validation.IllegalAlbumIdException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,13 +46,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static se.kecon.kalbum.util.FileUtils.copy;
 
 /**
  * Test the album controller
@@ -82,13 +90,23 @@ class AlbumControllerTest {
     @Mock
     private ContentData contentData2;
 
+    @MockBean
+    private UserController userController;
+
+    @MockBean
+    private UserDao userDao;
+
+    @MockBean
+    private AlbumAuthorizationManager albumAuthorizationManager;
+
     private Path albumBasePath;
+
 
     @BeforeEach
     void setUp() throws IOException, IllegalAlbumIdException {
 
         // Create an in-memory file system
-        fileSystem = Jimfs.newFileSystem(Configuration.unix());
+        fileSystem = Jimfs.newFileSystem(UUID.randomUUID().toString(), Configuration.unix());
 
         // Define the root directory for the file system
         Path rootDir = fileSystem.getPath("/");
@@ -105,6 +123,11 @@ class AlbumControllerTest {
             requireNonNull(inputStream, "Could not find file id1.json");
             Files.copy(inputStream, albumBasePath.resolve("id1.json"));
         }
+
+        copy("".getBytes(), albumBasePath.resolve("users"));
+
+        when(albumAuthorizationManager.isAlbumAdmin(any(), any())).thenReturn(true);
+        when(albumAuthorizationManager.isAlbumUser(any(), any())).thenReturn(true);
 
         when(contentData1.getAlt()).thenReturn("Describes IMG_8653.jpg");
         when(contentData1.getSrc()).thenReturn("IMG_8653.jpg");
@@ -141,6 +164,7 @@ class AlbumControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testListAlbumContents() throws Exception {
         mockMvc.perform(get("/albums/id1/contents/"))
                 .andExpect(status().isOk())
@@ -152,12 +176,14 @@ class AlbumControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testListAlbumContentsInvalidAlbumId() throws Exception {
         mockMvc.perform(get("/albums/id2/contents/"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testUploadImage() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
 
@@ -172,12 +198,13 @@ class AlbumControllerTest {
             );
 
             mockMvc.perform(multipart("/albums/id1/contents/")
-                            .file(file))
+                            .file(file).with(csrf()))
                     .andExpect(status().isCreated());
         }
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testUploadImageWithInvalidAlbumId() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
 
@@ -192,12 +219,13 @@ class AlbumControllerTest {
             );
 
             mockMvc.perform(multipart("/albums/id2/contents/")
-                            .file(file))
+                            .file(file).with(csrf()))
                     .andExpect(status().isNotFound());
         }
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testUploadImageWithInvalidContentType() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
 
@@ -212,12 +240,13 @@ class AlbumControllerTest {
             );
 
             mockMvc.perform(multipart("/albums/id1/contents/")
-                            .file(file))
+                            .file(file).with(csrf()))
                     .andExpect(status().isUnsupportedMediaType());
         }
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testListAlbums() throws Exception {
         mockMvc.perform(get("/albums/"))
                 .andExpect(status().isOk())
@@ -226,25 +255,38 @@ class AlbumControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testGetAlbumWithInvalidId() throws Exception {
         mockMvc.perform(get("/albums/id2/"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "SUPERADMIN")
     void testCreateAlbum() throws Exception {
-
+        when(albumAuthorizationManager.isAdmin(any())).thenReturn(true);
         when(albumDao.create(any())).thenReturn(album);
 
-        mockMvc.perform(post("/albums/")
+        mockMvc.perform(post("/albums/").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"Test album\"}"))
                 .andExpect(status().isCreated());
     }
 
     @Test
+    @WithMockUser(username = "user2", roles = "NONE")
+    void testCreateAlbumAsUser() throws Exception {
+        mockMvc.perform(post("/albums/").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"Test album\"}"))
+                .andExpect(status().isForbidden());
+        verify(albumDao, never()).create(any());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testPatchContent() throws Exception {
-        mockMvc.perform(patch("/albums/id1/contents/IMG_8653.jpg")
+        mockMvc.perform(patch("/albums/id1/contents/IMG_8653.jpg").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"alt\": \"Describes IMG_8653.jpg\",\"text\": \"Some text\"}"))
                 .andExpect(status().isNoContent());
@@ -255,22 +297,25 @@ class AlbumControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testPatchContentWithInvalidAlbumId() throws Exception {
-        mockMvc.perform(patch("/albums/id2/contents/IMG_8653.jpg")
+        mockMvc.perform(patch("/albums/id2/contents/IMG_8653.jpg").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"alt\": \"Describes IMG_8653.jpg\",\"text\": \"Some text\"}"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testPatchContentWithInvalidFilename() throws Exception {
-        mockMvc.perform(patch("/albums/id1/contents/IMG_8654.jpg")
+        mockMvc.perform(patch("/albums/id1/contents/IMG_8654.jpg").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"alt\": \"Describes IMG_8653.jpg\",\"text\": \"Some text\"}"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testCreateContentAndGetContent()
             throws Exception {
 
@@ -287,7 +332,7 @@ class AlbumControllerTest {
             );
 
             mockMvc.perform(multipart("/albums/id1/contents/")
-                            .file(file))
+                            .file(file).with(csrf()))
                     .andExpect(status().isCreated());
 
             mockMvc.perform(get("/albums/id1/contents/IMG_8654.jpg"))
@@ -297,6 +342,7 @@ class AlbumControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testCreateContentWithInvalidAlbumId() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
 
@@ -311,12 +357,13 @@ class AlbumControllerTest {
             );
 
             mockMvc.perform(multipart("/albums/id2/contents/") // <-- id2
-                            .file(file))
+                            .file(file).with(csrf()))
                     .andExpect(status().isNotFound());
         }
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testCreateContentWithInvalidContentType() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
 
@@ -331,24 +378,27 @@ class AlbumControllerTest {
             );
 
             mockMvc.perform(multipart("/albums/id1/contents/")
-                            .file(file))
+                            .file(file).with(csrf()))
                     .andExpect(status().isUnsupportedMediaType());
         }
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testGetContentWithInvalidAlbumId() throws Exception {
         mockMvc.perform(get("/albums/id2/contents/IMG_8653.jpg"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testGetContentWithInvalidFilename() throws Exception {
         mockMvc.perform(get("/albums/id1/contents/IMG_8654.jpg"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testGetThumbnailAsImage() throws Exception {
 
         mockMvc.perform(get("/albums/id1/contents/thumbnails/IMG_8653.jpg"))
@@ -357,6 +407,7 @@ class AlbumControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testGetThumbnailAsVideo() throws Exception {
 
         mockMvc.perform(get("/albums/id1/contents/thumbnails/IMG_8666.mp4"))
@@ -365,6 +416,7 @@ class AlbumControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testGetThumbnailWithInvalidAlbumId() throws Exception {
         mockMvc.perform(get("/albums/id2/contents/thumbnails/IMG_8653.jpg"))
                 .andExpect(status().isNotFound());
@@ -372,14 +424,16 @@ class AlbumControllerTest {
 
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testGetThumbnailWithInvalidFilename() throws Exception {
         mockMvc.perform(get("/albums/id1/contents/thumbnails/IMG_8654.jpg"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testDeleteContent() throws Exception {
-        mockMvc.perform(delete("/albums/id1/contents/IMG_8653.jpg"))
+        mockMvc.perform(delete("/albums/id1/contents/IMG_8653.jpg").with(csrf()))
                 .andExpect(status().isNoContent());
 
         verify(albumDao).update(album);
@@ -387,24 +441,28 @@ class AlbumControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testDeleteContentWithInvalidAlbumId() throws Exception {
-        mockMvc.perform(delete("/albums/id2/contents/IMG_8653.jpg"))
+        mockMvc.perform(delete("/albums/id2/contents/IMG_8653.jpg").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testDeleteContentWithInvalidFilename() throws Exception {
-        mockMvc.perform(delete("/albums/id1/contents/IMG_8654.jpg"))
+        mockMvc.perform(delete("/albums/id1/contents/IMG_8654.jpg").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "ADMIN")
     void testDeleteAlbumWithInvalidId() throws Exception {
-        mockMvc.perform(delete("/albums/id2/"))
+        mockMvc.perform(delete("/albums/id2/").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
     void testGetPreview() throws Exception {
 
         ClassLoader classLoader = getClass().getClassLoader();

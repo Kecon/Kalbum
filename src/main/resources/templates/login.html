@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Kalbum - Login</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+    <meta name="x-csrf-token" th:content="${_csrf.token}"/>
+    <link rel="stylesheet" href="assets/css/styles.css"/>
+    <noscript>
+        <link rel="stylesheet" href="assets/css/noscript.css"/>
+    </noscript>
+</head>
+<body>
+    <!-- Wrapper -->
+    <div id="wrapper">
+        <section id="noscript">
+            <p>This application requires JavaScript to be enabled.</p>
+        </section>
+        <div id="login">
+            <h1>Login</h1>
+            <p>Please login supply your credentials.</p>
+            <div th:if="${param.error}">
+                Invalid username or password.
+            </div>
+            <div th:if="${param.logout}">
+                You have been logged out.
+            </div>
+            <form th:action="@{/login}" method="post">
+                <fieldset>
+                    <legend>Login</legend>
+                    <label for="username">Username</label><input type="text" name="username" id="username"/>
+                    <label for="password">Password</label><input type="password" name="password" id="password"/>
+                    <p><a href="resetpassword">Forgot password?</a></p>
+                    <button type="submit">Login</button>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

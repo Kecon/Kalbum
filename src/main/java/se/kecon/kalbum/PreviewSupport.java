@@ -6,6 +6,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import se.kecon.kalbum.util.FileUtils;
+import se.kecon.kalbum.validation.IllegalAlbumIdException;
+import se.kecon.kalbum.validation.IllegalFilenameException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

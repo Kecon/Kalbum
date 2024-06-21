@@ -1,0 +1,199 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Kalbum</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+    <meta name="x-csrf-token" th:content="${_csrf.token}"/>
+    <link rel="stylesheet" href="assets/css/styles.css"/>
+    <noscript>
+        <link rel="stylesheet" href="assets/css/noscript.css"/>
+    </noscript>
+</head>
+<body>
+
+<!-- Wrapper -->
+<div id="wrapper">
+    <section id="noscript">
+        <p>This application requires JavaScript to be enabled.</p>
+    </section>
+    <section id="header">
+        <header>
+            <a href="javascript:void(0)" id="selectAlbumButton">
+                <img src="assets/css/images/icon.png" alt="Kalbum" class="icon"/>
+                <h1>Kalbum</h1>
+            </a>
+            <a href="javascript:void(0)" id="selectUserButton">
+                <img src="assets/css/images/user.png" alt="Users" class="icon"/>
+            </a>
+        </header>
+    </section>
+
+    <!-- Main -->
+    <section id="main">
+
+        <!-- Items -->
+        <div class="items">
+        </div>
+
+    </section>
+
+    <!-- Footer -->
+    <section id="footer">
+        <section>
+            <div id="uploadFile" class="fields hide">
+                <div class="field">
+                    <label for="fileInput">Upload file</label>
+                    <input type="file" name="file" id="fileInput"/>
+                </div>
+            </div>
+        </section>
+    </section>
+</div>
+
+<dialog id="viewImage">
+    <button class="close">↪️</button>
+    <button class="previous" id="prevImage">⬅️</button>
+    <button class="next" id="nextImage">➡️</button>
+    <button class="download" id="downloadImage">⬇️</button>
+    <button class="delete" id="deleteImage">🗑️</button>
+    <button class="edit" id="editImage">✏️</button>
+    <img alt="" data-next="" data-previous="" id="image" src=""/>
+
+    <div id="editImageProperties">
+        <form>
+            <label for="imageAlt">Title</label>
+            <input type="text" name="alt" id="imageAlt" value=""/>
+
+            <label for="imageText">Text</label>
+            <textarea name="text" id="imageText"></textarea>
+        </form>
+
+        <button class="save" id="saveImage">💾</button>
+        <button class="cancel" id="cancelImage">❌</button>
+    </div>
+</dialog>
+
+<dialog id="viewVideo">
+
+    <button class="close">↪️</button>
+    <button class="previous" id="prevVideo">⬅️</button>
+    <button class="next" id="nextVideo">➡️</button>
+    <button class="download" id="downloadVideo">⬇️</button>
+    <button class="delete" id="deleteVideo">🗑️</button>
+    <button class="edit" id="editVideo">✏️</button>
+
+    <div id="editVideoProperties">
+        <form>
+            <label for="videoAlt">Title</label>
+            <input type="text" name="alt" id="videoAlt" value=""/>
+            <label for="videoText">Text</label>
+            <textarea name="text" id="videoText"></textarea>
+        </form>
+        <button class="save" id="saveVideo">💾</button>
+        <button class="cancel" id="cancelVideo">❌</button>
+    </div>
+
+
+    <video id="video" preload="auto" loop controls data-next="" data-previous="">
+        <source src="" id="videoSource" type="video/mp4"/>
+    </video>
+</dialog>
+
+<dialog id="selectAlbum">
+    <button class="close">↪️</button>
+    <h2>Select album</h2>
+    <p>The following albums are available for you to see.</p>
+    <form onsubmit="return false">
+        <fieldset>
+            <legend>Create new album</legend>
+            <label for="albumName">Album name</label>
+            <input type="text" name="albumName" id="albumName" value=""/>
+            <button class="create" type="submit" id="createAlbumButton">Create</button>
+        </fieldset>
+    </form>
+    <div id="albums">
+    </div>
+</dialog>
+
+<dialog id="selectUser">
+    <button class="close">↪️</button>
+    <h2>Change password</h2>
+    <form onsubmit="return false">
+        <fieldset>
+            <legend>Change password</legend>
+            <label for="oldPassword">Old password</label>
+            <input type="password" name="oldPassword" id="oldPassword" value=""/>
+            <label for="newPassword">New password</label>
+            <input type="password" name="newPassword" id="newPassword" value=""/>
+            <label for="newPassword2">New password (again)</label>
+            <input type="password" name="newPassword2" id="newPassword2" value=""/>
+            <button class="save" type="submit" id="changePasswordButton">Save</button>
+        </fieldset>
+    </form>
+    <div id="userAdmin">
+        <h2>Select user</h2>
+        <p>The following users are available for you to see.</p>
+        <form onsubmit="return false">
+            <fieldset>
+                <legend>Create new user</legend>
+                <label for="username">Username</label>
+                <input type="text" name="username" id="username" value=""/>
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" value=""/>
+                <button class="create" type="submit" id="createUserButton">Create</button>
+            </fieldset>
+        </form>
+        <table>
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th id="albumRoleHeader">Album Role</th>
+                <th>Enabled</th>
+            </tr>
+            </thead>
+            <tbody id="users">
+            </tbody>
+        </table>
+    </div>
+</dialog>
+
+<dialog id="editUser">
+    <button class="close">↪️</button>
+    <h2>Edit user</h2>
+    <form onsubmit="return false">
+        <fieldset>
+            <legend>Edit user</legend>
+            <label for="editUsername">Username</label>
+            <input type="text" name="username" id="editUsername" value="" readonly/>
+            <label for="editEmail">Email</label>
+            <input type="email" name="email" id="editEmail" value=""/>
+            <label for="editRole">Role</label>
+            <select name="role" id="editRole">
+                <option value="USER">User</option>
+                <option value="ADMIN">Admin</option>
+                <option value="SUPERADMIN">Super Admin</option>
+            </select>
+            <label for="editAlbumRole">Album Role</label>
+            <select name="albumRole" id="editAlbumRole">
+                <option value="">None</option>
+                <option value="USER">User</option>
+                <option value="ADMIN">Admin</option>
+            </select>
+            <label for="editEnabled">Enabled</label>
+            <input type="checkbox" name="enabled" id="editEnabled" value="true">
+            <button class="save" type="submit" id="saveUserButton">Save</button>
+        </fieldset>
+    </form>
+</dialog>
+
+<form>
+    <input type="hidden" name="albumId" id="albumId" value=""/>
+</form>
+
+<!-- Scripts -->
+<script src="assets/js/script.js"></script>
+</body>
+</html>

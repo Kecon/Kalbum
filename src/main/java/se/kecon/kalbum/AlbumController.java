@@ -30,9 +30,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PostFilter;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import se.kecon.kalbum.auth.AlbumAuthorizationManager;
+import se.kecon.kalbum.validation.IllegalAlbumIdException;
+import se.kecon.kalbum.validation.IllegalFilenameException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -52,7 +57,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static se.kecon.kalbum.FileUtils.*;
+import static se.kecon.kalbum.util.FileUtils.*;
 
 /**
  * Controller for the album API.
@@ -74,6 +79,9 @@ public class AlbumController {
     @Autowired
     private PreviewSupport previewSupport;
 
+    @Autowired
+    private AlbumAuthorizationManager albumAuthorizationManager;
+
 
     /**
      * List all albums
@@ -81,7 +89,8 @@ public class AlbumController {
      * @return list of albums
      */
     @GetMapping(path = "/albums/")
-    public ResponseEntity<List<AlbumContent>> listAlbums() {
+    @PostFilter("@albumAuthorizationManager.isAlbumUser(authentication, filterObject.id)")
+    public List<AlbumContent> listAlbums() {
         log.info("List albums");
 
         final List<AlbumContent> albumContents = new ArrayList<>();
@@ -93,9 +102,8 @@ public class AlbumController {
             return albumContent;
         }).forEach(albumContents::add);
 
-        return new ResponseEntity<>(albumContents, HttpStatus.OK);
+        return albumContents;
     }
-
 
     /**
      * Create a new album
@@ -104,6 +112,7 @@ public class AlbumController {
      * @return the id of the created album
      */
     @PostMapping(path = "/albums/")
+    @PreAuthorize("@albumAuthorizationManager.isAdmin(authentication)")
     public ResponseEntity<Void> createAlbum(@RequestBody AlbumContent albumContent) {
         log.info("Create album {}", albumContent);
 
@@ -125,7 +134,6 @@ public class AlbumController {
         return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
 
-
     /**
      * Get album
      *
@@ -133,6 +141,7 @@ public class AlbumController {
      * @return the album
      */
     @GetMapping(path = "/albums/{id}/contents/")
+    @PreAuthorize("@albumAuthorizationManager.isAlbumUser(authentication, #id)")
     public ResponseEntity<List<ContentData>> listAlbumContents(@PathVariable(name = "id") String id) {
         log.info("List resource directory for {}", id);
 
@@ -151,7 +160,6 @@ public class AlbumController {
         }
     }
 
-
     /**
      * Upload content to an album
      *
@@ -160,6 +168,7 @@ public class AlbumController {
      * @return the status
      */
     @PostMapping("/albums/{id}/contents/")
+    @PreAuthorize("@albumAuthorizationManager.isAlbumAdmin(authentication, #id)")
     public ResponseEntity<Void> uploadContent(@PathVariable(name = "id") String id, @RequestParam("file") MultipartFile file) {
         log.info("Upload content {} for album {}", file.getOriginalFilename(), id);
 
@@ -297,6 +306,7 @@ public class AlbumController {
      * @return the status
      */
     @DeleteMapping("/albums/{id}/contents/{filename}")
+    @PreAuthorize("@albumAuthorizationManager.isAlbumAdmin(authentication, #id)")
     public ResponseEntity<Void> deleteContent(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename) {
         log.info("Delete content {} for album {}", filename, id);
 
@@ -345,6 +355,7 @@ public class AlbumController {
      * @return the status
      */
     @PatchMapping("/albums/{id}/contents/{filename}")
+    @PreAuthorize("@albumAuthorizationManager.isAlbumAdmin(authentication, #id)")
     public ResponseEntity<Void> patchContent(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename, @RequestBody ContentData contentData) {
         log.info("Patch content {} for album {}", filename, id);
 
@@ -384,6 +395,7 @@ public class AlbumController {
      * @return the content
      */
     @GetMapping(path = "/albums/{id}/contents/{filename}")
+    @PreAuthorize("@albumAuthorizationManager.isAlbumUser(authentication, #id)")
     public ResponseEntity<InputStreamResource> getContent(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename) {
 
         try {
@@ -411,6 +423,7 @@ public class AlbumController {
      * @return the thumbnail
      */
     @GetMapping(path = "/albums/{id}/contents/thumbnails/{filename}")
+    @PreAuthorize("@albumAuthorizationManager.isAlbumUser(authentication, #id)")
     public ResponseEntity<InputStreamResource> getThumbnail(@PathVariable(name = "id") String id, @PathVariable(name = "filename") String filename) {
         try {
             // Input is validated by getThumbnailPath
@@ -430,7 +443,15 @@ public class AlbumController {
         }
     }
 
+    /**
+     * Get preview from an album
+     *
+     * @param id       the id of the album
+     * @param generate whether to generate the preview if it does not exist
+     * @return the preview
+     */
     @GetMapping(path = "/albums/{id}/preview.png")
+    @PreAuthorize("@albumAuthorizationManager.isAlbumUser(authentication, #id)")
     public ResponseEntity<InputStreamResource> getPreview(@PathVariable(name = "id") String id, @RequestParam(name = "generate", defaultValue = "false") boolean generate) {
         try {
             final Optional<Album> album = this.albumDao.get(id);

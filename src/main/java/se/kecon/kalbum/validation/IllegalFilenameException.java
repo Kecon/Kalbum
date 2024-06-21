@@ -15,24 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package se.kecon.kalbum;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+package se.kecon.kalbum.validation;
 
 /**
- * Main class for the application.
+ * Exception for invalid content filename.
  *
  * @author Kenny Colliander
- * @since 2023-07-31
+ * @since 2023-08-03
  */
-@SpringBootApplication
-@ComponentScan(basePackages = {"se.kecon.kalbum", "se.kecon.kalbum.auth"})
-public class KalbumApplication {
+public class IllegalFilenameException extends Exception {
 
-    public static void main(String[] args) {
-        SpringApplication.run(KalbumApplication.class, args);
+    public IllegalFilenameException() {
+        super("Invalid filename");
     }
 
+    public IllegalFilenameException(String message) {
+        super(message);
+    }
+
+    public IllegalFilenameException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public IllegalFilenameException(Throwable cause) {
+        super(cause);
+    }
 }
