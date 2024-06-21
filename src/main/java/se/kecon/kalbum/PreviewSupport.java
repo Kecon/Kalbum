@@ -6,9 +6,11 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import se.kecon.kalbum.util.FileUtils;
+import se.kecon.kalbum.validation.IllegalAlbumIdException;
+import se.kecon.kalbum.validation.IllegalFilenameException;
 
 import javax.imageio.ImageIO;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -85,9 +87,9 @@ public class PreviewSupport {
      * Create a preview image for the given album
      *
      * @param album album
-     * @throws IllegalAlbumIdException if the album id is invalid
+     * @throws IllegalAlbumIdException  if the album id is invalid
      * @throws IllegalFilenameException if the filename is invalid
-     * @throws IOException if the preview image could not be created
+     * @throws IOException              if the preview image could not be created
      */
     public void createPreview(Album album) throws IllegalAlbumIdException, IllegalFilenameException, IOException {
         final Path previewPath = FileUtils.getContentPath(albumBasePath, album.getId(), PREVIEW_FILENAME);
@@ -98,14 +100,12 @@ public class PreviewSupport {
         loadImages(album, imageList);
 
         Graphics2D graphics = bufferedImage.createGraphics();
-        try
-        {
+        try {
             // Fill with transparent color
             graphics.setColor(TRANSPARENT);
             graphics.fillRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
 
-            for(int index = 0; index < imageList.size(); index++)
-            {
+            for (int index = 0; index < imageList.size(); index++) {
                 // Place images in random areas
                 final BufferedImage image = imageList.get(index);
 
@@ -113,14 +113,11 @@ public class PreviewSupport {
                 final int area = (index + 1) >= imageList.size() ? 0 : (index % Area.values().length);
                 randomPlaceImage(image, graphics, Area.values()[area]);
             }
-        }
-        finally
-        {
+        } finally {
             graphics.dispose();
         }
 
-        try(final OutputStream outputStream = Files.newOutputStream(previewPath))
-        {
+        try (final OutputStream outputStream = Files.newOutputStream(previewPath)) {
             // Write preview image to file using NIO API.
             ImageIO.write(bufferedImage, "png", outputStream);
         }
@@ -129,10 +126,10 @@ public class PreviewSupport {
     /**
      * Load images from the album. Random images are selected. Maximum number of images is {@link #MAX_IMAGES}. Please note that only images are loaded, and not videos.
      *
-     * @param album album
+     * @param album     album
      * @param imageList list of images
      */
-    protected void loadImages(final Album album,final List<BufferedImage> imageList) {
+    protected void loadImages(final Album album, final List<BufferedImage> imageList) {
         final List<ContentData> contents = new ArrayList<>(album.getContents());
         Collections.shuffle(contents);
         contents.stream().filter((ContentData contentData) -> contentData.getContentType().startsWith("image/") && imageList.size() < MAX_IMAGES).forEach((ContentData contentData) -> {
@@ -147,9 +144,9 @@ public class PreviewSupport {
     /**
      * Place image in the given area. The image will be scaled to fit in the area. It will be rotated randomly.
      *
-     * @param source source image
+     * @param source      source image
      * @param destination destination graphics
-     * @param area area
+     * @param area        area
      */
     protected void randomPlaceImage(final BufferedImage source, final Graphics2D destination, final Area area) {
 
@@ -157,7 +154,7 @@ public class PreviewSupport {
         final int newWidth;
         final int newHeight;
 
-        if(source.getWidth() > source.getHeight()) {
+        if (source.getWidth() > source.getHeight()) {
             // Landscape
             final float ratio = (float) source.getWidth() / MAX_PREVIEW_IMAGE_WIDTH;
             newWidth = MAX_PREVIEW_IMAGE_WIDTH;
@@ -206,7 +203,7 @@ public class PreviewSupport {
      * Rotate image
      *
      * @param bufferedImage image
-     * @param angle angle
+     * @param angle         angle
      * @return rotated image
      */
     protected BufferedImage rotateImage(final BufferedImage bufferedImage, final float angle) {
@@ -223,8 +220,7 @@ public class PreviewSupport {
             graphics2D.translate((newWidth - width) / 2, (newHeight - height) / 2);
             graphics2D.rotate(Math.toRadians(angle), width / 2d, height / 2d);
             graphics2D.drawRenderedImage(bufferedImage, null);
-        }
-        finally {
+        } finally {
             graphics2D.dispose();
         }
 

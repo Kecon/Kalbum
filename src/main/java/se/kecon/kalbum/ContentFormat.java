@@ -28,6 +28,7 @@ import java.util.Set;
  * @author Kenny Colliander
  * @since 2023-07-31
  */
+@Getter
 public enum ContentFormat {
     /**
      * JPEG
@@ -44,7 +45,6 @@ public enum ContentFormat {
      */
     MP4("video/mp4", false, "mp4");
 
-    @Getter
     private final String contentType;
 
     @Getter

@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import se.kecon.kalbum.validation.IllegalAlbumIdException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,8 +37,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static se.kecon.kalbum.FileUtils.removeSuffix;
-import static se.kecon.kalbum.Validation.checkValidAlbumId;
+import static se.kecon.kalbum.util.FileUtils.removeSuffix;
+import static se.kecon.kalbum.validation.Validation.checkValidAlbumId;
 
 /**
  * Data access objects for albums.
