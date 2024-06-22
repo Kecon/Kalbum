@@ -56,13 +56,15 @@ public class SecurityConfiguration {
     private RequestMatcher myCustomCsrfMatcher() {
         RequestMatcher usersPost = new AntPathRequestMatcher("/users/**", "POST");
         RequestMatcher usersPut = new AntPathRequestMatcher("/users/**", "PUT");
+        RequestMatcher usersPatch = new AntPathRequestMatcher("/users/**", "PATCH");
         RequestMatcher usersDelete = new AntPathRequestMatcher("/users/**", "DELETE");
 
         RequestMatcher albumsPost = new AntPathRequestMatcher("/albums/**", "POST");
         RequestMatcher albumsPut = new AntPathRequestMatcher("/albums/**", "PUT");
+        RequestMatcher albumsPatch = new AntPathRequestMatcher("/albums/**", "PATCH");
         RequestMatcher albumsDelete = new AntPathRequestMatcher("/albums/**", "DELETE");
 
-        return new OrRequestMatcher(usersPost, usersPut, usersDelete, albumsPost, albumsPut, albumsDelete);
+        return new OrRequestMatcher(usersPost, usersPut, usersPatch, usersDelete, albumsPost, albumsPut, albumsPatch, albumsDelete);
     }
 
     @Bean

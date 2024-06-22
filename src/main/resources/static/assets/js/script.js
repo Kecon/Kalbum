@@ -2,8 +2,13 @@ var playPromise;
 var editing = false;
 var csrfToken = null;
 var currentUser = null;
+var returnedCsrfToken = null;
 
 function getCSRFToken() {
+    if(returnedCsrfToken != null) {
+        return returnedCsrfToken;
+    }
+
     const csrfMetaTag = document.querySelector('meta[name="x-csrf-token"]');
 
     if (csrfMetaTag) {
@@ -15,7 +20,12 @@ function getCSRFToken() {
 
 function getCSRFTokenFromHeader(response) {
     var newCsrfToken = response.headers.get('X-CSRF-Token');
-    return newCsrfToken != null ? newCsrfToken : csrfToken;
+    if(newCsrfToken != null)
+    {
+        returnedCsrfToken = newCsrfToken;
+    }
+
+    return returnedCsrfToken;
 }
 
 function loadAlbums() {
