@@ -43,6 +43,7 @@ public class SecurityConfiguration {
                                 .requestMatchers("/assets/css/**").permitAll()
                                 .requestMatchers("/images/**").permitAll()
                                 .requestMatchers("/users/", "/users/**").permitAll()
+                                .requestMatchers("/albums/", "/albums/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.csrfTokenRepository(csrfTokenRepository).requireCsrfProtectionMatcher(myCustomCsrfMatcher())) // Sensitive: csrf protection is disabled for specific routes

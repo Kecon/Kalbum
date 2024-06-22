@@ -812,11 +812,11 @@ function saveUser() {
 
         fetch("users/" + username + "/albumRoles/" + albumId, {
             method: "PUT",
-            body: albumData,
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "X-CSRF-Token": csrfToken
             },
+            body: albumData,
         }).then(function(response) {
             csrfToken = response.headers.get('X-CSRF-Token');
         }).catch((error) => {
@@ -878,11 +878,11 @@ function changePassword() {
 
     fetch("users/" + currentUser.username + "/password", {
         method: "PUT",
-        body: data,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
             "X-CSRF-Token": csrfToken
         },
+        body: data,
     }).then(function(response) {
         if(response.status == 403) {
             alert("Wrong password!");
