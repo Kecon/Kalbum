@@ -13,7 +13,7 @@ function getCSRFToken() {
     }
 }
 
-function getCSRFTokenFromHeader(var response) {
+function getCSRFTokenFromHeader(response) {
     var newCsrfToken = response.headers.get('X-CSRF-Token');
     return newCsrfToken != null ? newCsrfToken : csrfToken;
 }
