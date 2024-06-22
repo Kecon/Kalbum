@@ -26,6 +26,7 @@ import static se.kecon.kalbum.validation.Validation.*;
 public class UserController {
 
     public static final String CSRF_TOKEN = "X-CSRF-Token";
+
     @Autowired
     private UserDao userDao;
 

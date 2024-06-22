@@ -59,11 +59,13 @@ function createAlbum() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
         },
         body: JSON.stringify({
             name: albumName
         }),
     }).then(function(response) {
+        csrfToken = response.headers.get('X-CSRF-Token');
         return response.json();
     }).then(function(data) {
         if (data != null) {
@@ -148,11 +150,15 @@ function uploadFile() {
 
     fetch("albums/" + albumId + "/contents/", {
         method: "POST",
+        headers: {
+          "X-CSRF-Token": csrfToken
+        },
         body: formData,
     }).then(function(response) {
         if (response != null) {
             console.log("File uploaded successfully!", response);
             document.getElementById("fileInput").value = "";
+            csrfToken = response.headers.get('X-CSRF-Token');
             reloadContents();
         }
     }).catch((error) => {
@@ -205,12 +211,15 @@ function saveImage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
         },
+
         body: JSON.stringify({
             alt: alt,
             text: text,
         }),
     }).then(function(response) {
+        csrfToken = response.headers.get('X-CSRF-Token');
         closeViewImage();
         reloadContents();
         return response.json();
@@ -221,7 +230,11 @@ function saveImage() {
 function deleteImage() {
     fetch(document.getElementById("image").src, {
         method: "DELETE",
+        headers: {
+          "X-CSRF-Token": csrfToken
+        },
     }).then(function(response) {
+        csrfToken = response.headers.get('X-CSRF-Token');
         closeViewImage();
         reloadContents();
         return response.json();
