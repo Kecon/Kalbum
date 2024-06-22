@@ -13,6 +13,11 @@ function getCSRFToken() {
     }
 }
 
+function getCSRFTokenFromHeader(var response) {
+    var newCsrfToken = response.headers.get('X-CSRF-Token');
+    return newCsrfToken != null ? newCsrfToken : csrfToken;
+}
+
 function loadAlbums() {
     fetch("albums/").then(function(response) {
         return response.json();
@@ -65,7 +70,7 @@ function createAlbum() {
             name: albumName
         }),
     }).then(function(response) {
-        csrfToken = response.headers.get('X-CSRF-Token');
+        csrfToken = getCSRFTokenFromHeader(response)
         return response.json();
     }).then(function(data) {
         if (data != null) {
@@ -158,7 +163,7 @@ function uploadFile() {
         if (response != null) {
             console.log("File uploaded successfully!", response);
             document.getElementById("fileInput").value = "";
-            csrfToken = response.headers.get('X-CSRF-Token');
+            csrfToken = getCSRFTokenFromHeader(response)
             reloadContents();
         }
     }).catch((error) => {
@@ -219,7 +224,7 @@ function saveImage() {
             text: text,
         }),
     }).then(function(response) {
-        csrfToken = response.headers.get('X-CSRF-Token');
+        csrfToken = getCSRFTokenFromHeader(response)
         closeViewImage();
         reloadContents();
         return response.json();
@@ -234,7 +239,7 @@ function deleteImage() {
           "X-CSRF-Token": csrfToken
         },
     }).then(function(response) {
-        csrfToken = response.headers.get('X-CSRF-Token');
+        csrfToken = getCSRFTokenFromHeader(response)
         closeViewImage();
         reloadContents();
         return response.json();
@@ -762,7 +767,7 @@ function createUser() {
             "X-CSRF-Token": csrfToken
         },
     }).then(function(response) {
-        csrfToken = response.headers.get('X-CSRF-Token');
+        csrfToken = getCSRFTokenFromHeader(response)
         loadUsers();
     }).catch((error) => {
         console.error("Error creating user: ", error);
@@ -818,7 +823,7 @@ function saveUser() {
             },
             body: albumData,
         }).then(function(response) {
-            csrfToken = response.headers.get('X-CSRF-Token');
+            csrfToken = getCSRFTokenFromHeader(response)
         }).catch((error) => {
             console.error("Error saving user: ", error);
         });
@@ -838,7 +843,7 @@ function saveUser() {
             "X-CSRF-Token": csrfToken
         },
     }).then(function(response) {
-        csrfToken = response.headers.get('X-CSRF-Token');
+        csrfToken = getCSRFTokenFromHeader(response)
         loadUsers();
         document.getElementById("editUser").close();
         showSelectUserDialog();
@@ -898,7 +903,7 @@ function changePassword() {
         document.getElementById("newPassword").value = "";
         document.getElementById("newPassword2").value = "";
 
-        csrfToken = response.headers.get('X-CSRF-Token');
+        csrfToken = getCSRFTokenFromHeader(response)
         loadUsers();
         document.getElementById("editUser").close();
         showSelectUserDialog();
