@@ -16,6 +16,7 @@ import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import se.kecon.kalbum.auth.AlbumAuthorizationManager;
 import se.kecon.kalbum.auth.FileAuthenticationManager;
 
@@ -67,5 +68,15 @@ public class SecurityConfiguration {
     @Bean
     Advisor preAuthorize(AlbumAuthorizationManager manager) {
         return AuthorizationManagerBeforeMethodInterceptor.preAuthorize(manager);
+    }
+
+    @Bean
+    public CommonsRequestLoggingFilter requestLoggingFilter() {
+        CommonsRequestLoggingFilter loggingFilter = new CommonsRequestLoggingFilter();
+        loggingFilter.setIncludeClientInfo(true);
+        loggingFilter.setIncludeQueryString(true);
+        loggingFilter.setIncludePayload(true);
+        loggingFilter.setMaxPayloadLength(64000);
+        return loggingFilter;
     }
 }
