@@ -159,11 +159,16 @@ function uploadFile() {
         },
         body: formData,
     }).then(function(response) {
-        if (response != null) {
-            console.log("File uploaded successfully!", response);
-            document.getElementById("fileInput").value = "";
-            reloadContents();
+        if (response.status == 403) {
+            alert("Upload not allowed!");
+            return;
+        } else if (response.status != 201) {
+            alert("Error uploading file!");
+            return;
         }
+        console.log("File uploaded successfully!", response);
+        document.getElementById("fileInput").value = "";
+        reloadContents();
     }).catch((error) => {
         console.error("Error uploading file: ", error);
     });
