@@ -34,9 +34,6 @@ public class UserController {
     @Autowired
     private AlbumAuthorizationManager albumAuthorizationManager;
 
-    @Autowired
-    private CsrfTokenRepository csrfTokenRepository;
-
     /**
      * Create a new user.
      *
@@ -68,8 +65,7 @@ public class UserController {
             user.setEnabled(true);
             user.setRole(Role.USER);
             this.userDao.save(user);
-            final CsrfToken token = csrfTokenRepository.generateToken(null);
-            return ResponseEntity.created(URI.create(username)).header(token.getHeaderName(), token.getToken()).build();
+            return ResponseEntity.created(URI.create(username)).build();
         } catch (IllegalUsernameException | IllegalEmailException e) {
             log.info("createUser {} and {} rejected due to {}", username, email, e.getMessage());
             return ResponseEntity.badRequest().build();
@@ -122,8 +118,7 @@ public class UserController {
             return ResponseEntity.badRequest().build();
         }
         this.userDao.deleteByUsername(username);
-        final CsrfToken token = csrfTokenRepository.generateToken(null);
-        return ResponseEntity.noContent().header(token.getHeaderName(), token.getToken()).build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -180,8 +175,7 @@ public class UserController {
         });
 
         log.info("updateUser {} with {} and enabled {}", username, email, enabled);
-        final CsrfToken token = csrfTokenRepository.generateToken(null);
-        return ResponseEntity.noContent().header(token.getHeaderName(), token.getToken()).build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -217,8 +211,7 @@ public class UserController {
 
         final String newPasswordHash = this.passwordEncoder.encode(newPassword);
         this.userDao.setPasswordHash(username, newPasswordHash);
-        final CsrfToken token = csrfTokenRepository.generateToken(null);
-        return ResponseEntity.noContent().header(token.getHeaderName(), token.getToken()).build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -257,8 +250,7 @@ public class UserController {
         });
 
         log.info("updateAlbumRole for {} and {} with {}", username, albumId, role);
-        final CsrfToken token = csrfTokenRepository.generateToken(null);
-        return ResponseEntity.noContent().header(token.getHeaderName(), token.getToken()).build();
+        return ResponseEntity.noContent().build();
     }
 
     /**

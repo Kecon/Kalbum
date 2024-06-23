@@ -21,7 +21,6 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.kecon.kalbum.auth.AlbumAuthorizationManager;
@@ -88,11 +83,6 @@ public class AlbumController {
     @Autowired
     private AlbumAuthorizationManager albumAuthorizationManager;
 
-    @Autowired
-    private CsrfTokenRepository csrfTokenRepository;
-
-
-
     /**
      * List all albums
      *
@@ -137,7 +127,7 @@ public class AlbumController {
         String resourceUrl = ServletUriComponentsBuilder.fromCurrentRequest().path("{id}").buildAndExpand(album.getId()).toUriString();
 
         // Create the HttpHeaders object and set the Location header
-        HttpHeaders headers = this.getHeadersWithCsrf();
+        HttpHeaders headers = new HttpHeaders();
         headers.setLocation(java.net.URI.create(resourceUrl));
 
         log.info("Created album {}", album);
@@ -258,7 +248,7 @@ public class AlbumController {
             String resourceUrl = ServletUriComponentsBuilder.fromCurrentRequest().path("{filename}").buildAndExpand(filename).toUriString();
 
             // Create the HttpHeaders object and set the Location header
-            HttpHeaders headers = this.getHeadersWithCsrf();
+            HttpHeaders headers = new HttpHeaders();
             headers.setLocation(URI.create(resourceUrl));
 
             return new ResponseEntity<>(headers, HttpStatus.CREATED);
@@ -344,18 +334,14 @@ public class AlbumController {
                 album.get().setContents(contents);
 
                 this.albumDao.update(album.get());
-                HttpHeaders headers = this.getHeadersWithCsrf();
-                return new ResponseEntity<>(headers, HttpStatus.NO_CONTENT);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             } else {
-                HttpHeaders headers = this.getHeadersWithCsrf();
-                return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
         } catch (IOException e) {
-            HttpHeaders headers = this.getHeadersWithCsrf();
-            return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (IllegalAlbumIdException | IllegalFilenameException | UnsupportedContentFormatException e) {
-            HttpHeaders headers = this.getHeadersWithCsrf();
-            return new ResponseEntity<>(headers, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
@@ -490,14 +476,5 @@ public class AlbumController {
         } catch (IllegalAlbumIdException | IllegalFilenameException | IOException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-    }
-
-
-    protected HttpHeaders getHeadersWithCsrf() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        HttpHeaders headers = new HttpHeaders();
-        CsrfToken token = csrfTokenRepository.generateToken(request);
-        headers.add(token.getHeaderName(), token.getToken());
-        return headers;
     }
 }

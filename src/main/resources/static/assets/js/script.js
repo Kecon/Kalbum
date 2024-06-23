@@ -1,31 +1,21 @@
 var playPromise;
 var editing = false;
 var csrfToken = null;
+var csrfHeader = null;
 var currentUser = null;
-var returnedCsrfToken = null;
 
-function getCSRFToken() {
-    if(returnedCsrfToken != null) {
-        return returnedCsrfToken;
-    }
-
+function loadCSRFToken() {
     const csrfMetaTag = document.querySelector('meta[name="x-csrf-token"]');
 
     if (csrfMetaTag) {
-        return csrfMetaTag.getAttribute('content');
-    } else {
-        return null;
-    }
-}
-
-function updateCSRFToken(response) {
-    var newCsrfToken = response.headers.get('X-CSRF-TOKEN');
-    if(newCsrfToken != null)
-    {
-        returnedCsrfToken = newCsrfToken;
+        csrfToken = csrfMetaTag.getAttribute('content');
     }
 
-    csrfToken = returnedCsrfToken;
+    const csrfHeaderMetaTag = document.querySelector('meta[name="x-csrf-header"]');
+
+    if (csrfHeaderMetaTag) {
+        csrfHeader = csrfHeaderMetaTag.getAttribute('content');
+    }
 }
 
 function loadAlbums() {
@@ -74,13 +64,12 @@ function createAlbum() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-TOKEN": csrfToken
+          csrfHeader: csrfToken
         },
         body: JSON.stringify({
             name: albumName
         }),
     }).then(function(response) {
-        updateCSRFToken(response);
         return response.json();
     }).then(function(data) {
         if (data != null) {
@@ -166,14 +155,13 @@ function uploadFile() {
     fetch("albums/" + albumId + "/contents/", {
         method: "POST",
         headers: {
-          "X-CSRF-TOKEN": csrfToken
+          csrfHeader: csrfToken
         },
         body: formData,
     }).then(function(response) {
         if (response != null) {
             console.log("File uploaded successfully!", response);
             document.getElementById("fileInput").value = "";
-            updateCSRFToken(response);
             reloadContents();
         }
     }).catch((error) => {
@@ -226,7 +214,7 @@ function saveImage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-TOKEN": csrfToken
+          csrfHeader: csrfToken
         },
 
         body: JSON.stringify({
@@ -234,7 +222,6 @@ function saveImage() {
             text: text,
         }),
     }).then(function(response) {
-        updateCSRFToken(response);
         closeViewImage();
         reloadContents();
         return response.json();
@@ -246,10 +233,9 @@ function deleteImage() {
     fetch(document.getElementById("image").src, {
         method: "DELETE",
         headers: {
-          "X-CSRF-TOKEN": csrfToken
+          csrfHeader: csrfToken
         },
     }).then(function(response) {
-        updateCSRFToken(response);
         closeViewImage();
         reloadContents();
         return response.json();
@@ -334,6 +320,7 @@ function saveVideo() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          csrfHeader: csrfToken
         },
         body: JSON.stringify({
             alt: alt,
@@ -376,6 +363,9 @@ function downloadVideo() {
 function deleteVideo() {
     fetch(document.getElementById("videoSource").src, {
         method: "DELETE",
+        headers: {
+          csrfHeader: csrfToken
+        },
     }).then(function(response) {
         closeViewVideo();
         reloadContents();
@@ -401,7 +391,7 @@ function ready(fn) {
 }
 
 ready(function () {
-    csrfToken = getCSRFToken();
+    loadCSRFToken();
 
     getCurrentUser();
 
@@ -774,10 +764,9 @@ function createUser() {
         body: data,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRF-TOKEN": csrfToken
+            csrfHeader: csrfToken
         },
     }).then(function(response) {
-        updateCSRFToken(response);
         loadUsers();
     }).catch((error) => {
         console.error("Error creating user: ", error);
@@ -829,11 +818,10 @@ function saveUser() {
             method: "PUT",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                "X-CSRF-TOKEN": csrfToken
+                csrfHeader: csrfToken
             },
             body: albumData,
         }).then(function(response) {
-            updateCSRFToken(response);
         }).catch((error) => {
             console.error("Error saving user: ", error);
         });
@@ -850,18 +838,15 @@ function saveUser() {
         body: data,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRF-TOKEN": csrfToken
+            csrfHeader: csrfToken
         },
     }).then(function(response) {
-        updateCSRFToken(response);
         loadUsers();
         document.getElementById("editUser").close();
         showSelectUserDialog();
     }).catch((error) => {
         console.error("Error saving user: ", error);
     });
-
-
 }
 
 function getCurrentUser() {
@@ -895,12 +880,10 @@ function changePassword() {
         method: "PUT",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRF-TOKEN": csrfToken
+            csrfHeader: csrfToken
         },
         body: data,
     }).then(function(response) {
-        updateCSRFToken(response);
-
         if(response.status == 403) {
             alert("Wrong password!");
             return;
@@ -915,7 +898,6 @@ function changePassword() {
         document.getElementById("newPassword").value = "";
         document.getElementById("newPassword2").value = "";
 
-
         loadUsers();
         document.getElementById("editUser").close();
         showSelectUserDialog();
@@ -924,5 +906,4 @@ function changePassword() {
         console.error("Error saving user: ", error);
         alert("Error changing password!");
     });
-
 }
