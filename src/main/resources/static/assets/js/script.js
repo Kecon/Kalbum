@@ -18,14 +18,14 @@ function getCSRFToken() {
     }
 }
 
-function getCSRFTokenFromHeader(response) {
-    var newCsrfToken = response.headers.get('X-CSRF-Token');
+function updateCSRFToken(response) {
+    var newCsrfToken = response.headers.get('X-CSRF-TOKEN');
     if(newCsrfToken != null)
     {
         returnedCsrfToken = newCsrfToken;
     }
 
-    return returnedCsrfToken;
+    csrfToken = returnedCsrfToken;
 }
 
 function loadAlbums() {
@@ -74,13 +74,13 @@ function createAlbum() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken
+          "X-CSRF-TOKEN": csrfToken
         },
         body: JSON.stringify({
             name: albumName
         }),
     }).then(function(response) {
-        csrfToken = getCSRFTokenFromHeader(response)
+        updateCSRFToken(response);
         return response.json();
     }).then(function(data) {
         if (data != null) {
@@ -166,14 +166,14 @@ function uploadFile() {
     fetch("albums/" + albumId + "/contents/", {
         method: "POST",
         headers: {
-          "X-CSRF-Token": csrfToken
+          "X-CSRF-TOKEN": csrfToken
         },
         body: formData,
     }).then(function(response) {
         if (response != null) {
             console.log("File uploaded successfully!", response);
             document.getElementById("fileInput").value = "";
-            csrfToken = getCSRFTokenFromHeader(response)
+            updateCSRFToken(response);
             reloadContents();
         }
     }).catch((error) => {
@@ -226,7 +226,7 @@ function saveImage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken
+          "X-CSRF-TOKEN": csrfToken
         },
 
         body: JSON.stringify({
@@ -234,7 +234,7 @@ function saveImage() {
             text: text,
         }),
     }).then(function(response) {
-        csrfToken = getCSRFTokenFromHeader(response)
+        updateCSRFToken(response);
         closeViewImage();
         reloadContents();
         return response.json();
@@ -246,10 +246,10 @@ function deleteImage() {
     fetch(document.getElementById("image").src, {
         method: "DELETE",
         headers: {
-          "X-CSRF-Token": csrfToken
+          "X-CSRF-TOKEN": csrfToken
         },
     }).then(function(response) {
-        csrfToken = getCSRFTokenFromHeader(response)
+        updateCSRFToken(response);
         closeViewImage();
         reloadContents();
         return response.json();
@@ -774,10 +774,10 @@ function createUser() {
         body: data,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRF-Token": csrfToken
+            "X-CSRF-TOKEN": csrfToken
         },
     }).then(function(response) {
-        csrfToken = getCSRFTokenFromHeader(response)
+        updateCSRFToken(response);
         loadUsers();
     }).catch((error) => {
         console.error("Error creating user: ", error);
@@ -829,11 +829,11 @@ function saveUser() {
             method: "PUT",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                "X-CSRF-Token": csrfToken
+                "X-CSRF-TOKEN": csrfToken
             },
             body: albumData,
         }).then(function(response) {
-            csrfToken = getCSRFTokenFromHeader(response)
+            updateCSRFToken(response);
         }).catch((error) => {
             console.error("Error saving user: ", error);
         });
@@ -850,10 +850,10 @@ function saveUser() {
         body: data,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRF-Token": csrfToken
+            "X-CSRF-TOKEN": csrfToken
         },
     }).then(function(response) {
-        csrfToken = getCSRFTokenFromHeader(response)
+        updateCSRFToken(response);
         loadUsers();
         document.getElementById("editUser").close();
         showSelectUserDialog();
@@ -895,10 +895,12 @@ function changePassword() {
         method: "PUT",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRF-Token": csrfToken
+            "X-CSRF-TOKEN": csrfToken
         },
         body: data,
     }).then(function(response) {
+        updateCSRFToken(response);
+
         if(response.status == 403) {
             alert("Wrong password!");
             return;
@@ -913,7 +915,7 @@ function changePassword() {
         document.getElementById("newPassword").value = "";
         document.getElementById("newPassword2").value = "";
 
-        csrfToken = getCSRFTokenFromHeader(response)
+
         loadUsers();
         document.getElementById("editUser").close();
         showSelectUserDialog();
