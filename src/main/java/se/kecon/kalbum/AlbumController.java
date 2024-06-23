@@ -21,6 +21,7 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.kecon.kalbum.auth.AlbumAuthorizationManager;
@@ -491,8 +494,9 @@ public class AlbumController {
 
 
     protected HttpHeaders getHeadersWithCsrf() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         HttpHeaders headers = new HttpHeaders();
-        CsrfToken token = csrfTokenRepository.generateToken(null);
+        CsrfToken token = csrfTokenRepository.generateToken(request);
         headers.add(token.getHeaderName(), token.getToken());
         return headers;
     }
