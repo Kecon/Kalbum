@@ -64,7 +64,7 @@ function createAlbum() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          csrfHeader: csrfToken
+          [csrfHeader]: csrfToken
         },
         body: JSON.stringify({
             name: albumName
@@ -155,7 +155,7 @@ function uploadFile() {
     fetch("albums/" + albumId + "/contents/", {
         method: "POST",
         headers: {
-          csrfHeader: csrfToken
+          [csrfHeader]: csrfToken
         },
         body: formData,
     }).then(function(response) {
@@ -214,7 +214,7 @@ function saveImage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          csrfHeader: csrfToken
+          [csrfHeader]: csrfToken
         },
 
         body: JSON.stringify({
@@ -233,7 +233,7 @@ function deleteImage() {
     fetch(document.getElementById("image").src, {
         method: "DELETE",
         headers: {
-          csrfHeader: csrfToken
+          [csrfHeader]: csrfToken
         },
     }).then(function(response) {
         closeViewImage();
@@ -320,7 +320,7 @@ function saveVideo() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          csrfHeader: csrfToken
+          [csrfHeader]: csrfToken
         },
         body: JSON.stringify({
             alt: alt,
@@ -364,7 +364,7 @@ function deleteVideo() {
     fetch(document.getElementById("videoSource").src, {
         method: "DELETE",
         headers: {
-          csrfHeader: csrfToken
+          [csrfHeader]: csrfToken
         },
     }).then(function(response) {
         closeViewVideo();
@@ -764,7 +764,7 @@ function createUser() {
         body: data,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            csrfHeader: csrfToken
+            [csrfHeader]: csrfToken
         },
     }).then(function(response) {
         loadUsers();
@@ -818,7 +818,7 @@ function saveUser() {
             method: "PUT",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                csrfHeader: csrfToken
+                [csrfHeader]: csrfToken
             },
             body: albumData,
         }).then(function(response) {
@@ -838,7 +838,7 @@ function saveUser() {
         body: data,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            csrfHeader: csrfToken
+            [csrfHeader]: csrfToken
         },
     }).then(function(response) {
         loadUsers();
@@ -880,7 +880,7 @@ function changePassword() {
         method: "PUT",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            csrfHeader: csrfToken
+            [csrfHeader]: csrfToken
         },
         body: data,
     }).then(function(response) {
