@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.*;
 import se.kecon.kalbum.validation.*;
@@ -24,8 +25,6 @@ import static se.kecon.kalbum.validation.Validation.*;
 @RestController
 @Slf4j
 public class UserController {
-
-    public static final String CSRF_TOKEN = "X-CSRF-Token";
 
     @Autowired
     private UserDao userDao;
@@ -69,7 +68,8 @@ public class UserController {
             user.setEnabled(true);
             user.setRole(Role.USER);
             this.userDao.save(user);
-            return ResponseEntity.created(URI.create(username)).header(CSRF_TOKEN, csrfTokenRepository.generateToken(null).getToken()).build();
+            final CsrfToken token = csrfTokenRepository.generateToken(null);
+            return ResponseEntity.created(URI.create(username)).header(token.getHeaderName(), token.getToken()).build();
         } catch (IllegalUsernameException | IllegalEmailException e) {
             log.info("createUser {} and {} rejected due to {}", username, email, e.getMessage());
             return ResponseEntity.badRequest().build();
@@ -122,7 +122,8 @@ public class UserController {
             return ResponseEntity.badRequest().build();
         }
         this.userDao.deleteByUsername(username);
-        return ResponseEntity.noContent().header(CSRF_TOKEN, csrfTokenRepository.generateToken(null).getToken()).build();
+        final CsrfToken token = csrfTokenRepository.generateToken(null);
+        return ResponseEntity.noContent().header(token.getHeaderName(), token.getToken()).build();
     }
 
     /**
@@ -179,7 +180,8 @@ public class UserController {
         });
 
         log.info("updateUser {} with {} and enabled {}", username, email, enabled);
-        return ResponseEntity.noContent().header(CSRF_TOKEN, csrfTokenRepository.generateToken(null).getToken()).build();
+        final CsrfToken token = csrfTokenRepository.generateToken(null);
+        return ResponseEntity.noContent().header(token.getHeaderName(), token.getToken()).build();
     }
 
     /**
@@ -215,8 +217,8 @@ public class UserController {
 
         final String newPasswordHash = this.passwordEncoder.encode(newPassword);
         this.userDao.setPasswordHash(username, newPasswordHash);
-
-        return ResponseEntity.noContent().header(CSRF_TOKEN, csrfTokenRepository.generateToken(null).getToken()).build();
+        final CsrfToken token = csrfTokenRepository.generateToken(null);
+        return ResponseEntity.noContent().header(token.getHeaderName(), token.getToken()).build();
     }
 
     /**
@@ -255,7 +257,8 @@ public class UserController {
         });
 
         log.info("updateAlbumRole for {} and {} with {}", username, albumId, role);
-        return ResponseEntity.noContent().header(CSRF_TOKEN, csrfTokenRepository.generateToken(null).getToken()).build();
+        final CsrfToken token = csrfTokenRepository.generateToken(null);
+        return ResponseEntity.noContent().header(token.getHeaderName(), token.getToken()).build();
     }
 
     /**
