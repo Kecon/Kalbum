@@ -20,10 +20,12 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new CacheControlInterceptor()).addPathPatterns("/index.html");
         registry.addInterceptor(new CacheControlInterceptor()).addPathPatterns("/login");
+        registry.addInterceptor(new CacheControlInterceptor()).addPathPatterns("/album/");
     }
 
     private static class CacheControlInterceptor implements HandlerInterceptor {
 
+        @Override
         public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
             if (request.getMethod().equals("GET")) {
                 response.setHeader("Cache-Control", "no-store");
