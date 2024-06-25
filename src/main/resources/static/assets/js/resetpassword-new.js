@@ -56,12 +56,12 @@ ready(function () {
     submitButton.addEventListener("click", function (event) {
         event.preventDefault();
         var request = new XMLHttpRequest();
-        request.open("PUT", "/resetpassword/" + document.getElementById("token").value);
+        request.open("PUT", "../resetpassword/" + document.getElementById("token").value);
         request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         request.onreadystatechange = function () {
             if (request.readyState === 4) {
                 if (request.status === 204) {
-                    window.location.href = "/login";
+                    window.location.href = "../login";
                 } else {
                     alert("Something went wrong. Please try again.");
                 }

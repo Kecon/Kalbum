@@ -21,7 +21,7 @@ ready(function () {
         request.onreadystatechange = function () {
             if (request.readyState === 4) {
                 if (request.status === 200) {
-                    window.location.href = "/login";
+                    window.location.href = "../login";
                 } else {
                     alert("Something went wrong. Please try again.");
                 }
