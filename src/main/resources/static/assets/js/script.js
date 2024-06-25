@@ -858,6 +858,15 @@ function getCurrentUser() {
     fetch("self", {
         method: "GET",
     }).then(function(response) {
+        if (response.status == 403 || response.status == 401) {
+            return;
+        }
+
+        if(response.redirected) {
+            window.location.replace(response.url);
+            return;
+        }
+
         return response.json();
     }).then(function(data) {
         currentUser = data;
